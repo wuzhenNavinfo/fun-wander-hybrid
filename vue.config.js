@@ -6,7 +6,7 @@ module.exports = {
         ws: true,
         changeOrigin: true,
         pathRewrite: {
-            '^/api': '' // 规则, 见下面说明
+            '^/api': ''
         }
       }
     }
