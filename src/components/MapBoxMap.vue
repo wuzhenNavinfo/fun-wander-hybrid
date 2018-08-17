@@ -1,15 +1,17 @@
 <template>
-    <div id='mapContainer'>
+    <div id='mapBoxMap' class='map-container'>
     </div>
 </template>
 
 <script>
     import mapboxgl from 'mapbox-gl';
+    import MineDataStyle from '../assets/mapbox/minedata-style'; // 不知道为啥不能用
+    import TencentStyle from '../assets/mapbox/tencent-style';
     import ajax from '../utils/ajax';
     import util from '../utils/util';
 
-    mapboxgl.accessToken =
-        'pk.eyJ1IjoibWFkc2hhd24iLCJhIjoiY2lqY2ZwcW4zMDAwMXc2a3VybmsxdzU1OSJ9.UTV2YhX9rABrPQIEI2QKwg';
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFkc2hhd24iLCJhIjoiY2lqY2ZwcW4zMDAwMXc2a3VybmsxdzU1OSJ9.UTV2YhX9rABrPQIEI2QKwg';
+
     export default {
         name: 'MainMap',
         props: {},
@@ -19,11 +21,13 @@
         methods: {
             createMap: function() {
                 const map = new mapboxgl.Map({
-                    container: 'mapContainer',
-                    style: 'mapbox://styles/mapbox/streets-v9', // 后续注意style本地化
-                    minZoon: 10,
+                    container: 'mapBoxMap',
+                    // style: 'mapbox://styles/mapbox/streets-v9', // mapbox默认
+                    // style: MineDataStyle,
+                    style: TencentStyle,
+                    minZoon: 3,
                     maxZoom: 24,
-                    zoom: 15,
+                    zoom: 17,
                     center: [108.94400235446722, 34.300590391379714]
                 });
                 map.on('load', () => {
@@ -97,7 +101,7 @@
                         source: 'poi',
                         layout: {
                             'text-field': '{name}',
-                            'text-font': ["Open Sans Regular","Arial Unicode MS Regular"],
+                            'text-font': ['Open Sans Regular','Arial Unicode MS Regular'],
                             'text-size': 12,
                             'text-offset': [0, 0],
                             'text-anchor': 'top'
@@ -240,7 +244,7 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
-    #mapContainer {
+    .map-container {
         width: 100%;
         height: 100%;
     }

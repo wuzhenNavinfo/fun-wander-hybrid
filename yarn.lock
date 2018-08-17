@@ -1291,6 +1291,12 @@ babel-plugin-transform-vue-jsx@^4.0.1:
   dependencies:
     esutils "^2.0.2"
 
+babel-runtime@^5.8.0:
+  version "5.8.38"
+  resolved "http://registry.npm.taobao.org/babel-runtime/download/babel-runtime-5.8.38.tgz#1c0b02eb63312f5f087ff20450827b425c9d4c19"
+  dependencies:
+    core-js "^1.0.0"
+
 babylon@7.0.0-beta.44:
   version "7.0.0-beta.44"
   resolved "http://registry.npm.taobao.org/babylon/download/babylon-7.0.0-beta.44.tgz#89159e15e6e30c5096e22d738d8c0af8a0e8ca1d"
@@ -1943,6 +1949,10 @@ copy-webpack-plugin@^4.5.2:
     p-limit "^1.0.0"
     serialize-javascript "^1.4.0"
 
+core-js@^1.0.0:
+  version "1.2.7"
+  resolved "http://registry.npm.taobao.org/core-js/download/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
+
 core-js@^2.5.3:
   version "2.5.7"
   resolved "http://registry.npm.taobao.org/core-js/download/core-js-2.5.7.tgz#f972608ff0cead68b841a16a932d0b183791814e"
@@ -2569,6 +2579,10 @@ es6-iterator@~2.0.3:
     d "1"
     es5-ext "^0.10.35"
     es6-symbol "^3.1.1"
+
+es6-promise@^3.0.2:
+  version "3.3.1"
+  resolved "http://registry.npm.taobao.org/es6-promise/download/es6-promise-3.3.1.tgz#a08cdde84ccdbf34d027a1451bc91d4bcd28a613"
 
 es6-symbol@^3.1.1, es6-symbol@~3.1.1:
   version "3.1.1"
@@ -4128,6 +4142,19 @@ lcid@^1.0.0:
   resolved "http://registry.npm.taobao.org/lcid/download/lcid-1.0.0.tgz#308accafa0bc483a3867b4b6f2b9506251d1b835"
   dependencies:
     invert-kv "^1.0.0"
+
+leaflet-vue@^0.1.0:
+  version "0.1.0"
+  resolved "http://registry.npm.taobao.org/leaflet-vue/download/leaflet-vue-0.1.0.tgz#bc71b64d09f5877d09c02c61e211a51c03ae9613"
+  dependencies:
+    babel-runtime "^5.8.0"
+    es6-promise "^3.0.2"
+    leaflet "^1.0.3"
+    vue "^2.1.10"
+
+leaflet@^1.0.3, leaflet@^1.3.3:
+  version "1.3.3"
+  resolved "http://registry.npm.taobao.org/leaflet/download/leaflet-1.3.3.tgz#5c8f2fd50e4a41ead93ab850dcd9e058811da9b9"
 
 levn@^0.3.0, levn@~0.3.0:
   version "0.3.0"
@@ -6964,7 +6991,7 @@ vue-template-es2015-compiler@^1.6.0:
   version "1.6.0"
   resolved "http://registry.npm.taobao.org/vue-template-es2015-compiler/download/vue-template-es2015-compiler-1.6.0.tgz#dc42697133302ce3017524356a6c61b7b69b4a18"
 
-vue@^2.5.16:
+vue@^2.1.10, vue@^2.5.16:
   version "2.5.17"
   resolved "http://registry.npm.taobao.org/vue/download/vue-2.5.17.tgz#0f8789ad718be68ca1872629832ed533589c6ada"
 

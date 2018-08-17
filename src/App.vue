@@ -1,18 +1,22 @@
 <template>
   <div id="app">
-    <MainMap/>
+    <MapBoxMap/>
   </div>
 </template>
 
 <script>
 import HelloWorld from './components/HelloWorld.vue'
-import MainMap from './components/MainMap.vue'
+import MapBoxMap from './components/MapBoxMap.vue'
+import LeafletMap from './components/LeafletMap.vue'
+import MineMap from './components/MineMap.vue'
 
 export default {
   name: 'app',
   components: {
     HelloWorld,
-    MainMap
+    MapBoxMap,
+    LeafletMap,
+    MineMap
   }
 }
 </script>
