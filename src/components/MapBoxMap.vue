@@ -30,122 +30,122 @@
                     zoom: 17,
                     center: [108.94400235446722, 34.300590391379714]
                 });
-                map.on('load', () => {
-                    map.addSource('building', {
-                        type: 'geojson',
-                        data: null // 无数据时默认值必须为null
-                    });
-                    map.addSource('poi-face', {
-                        type: 'geojson',
-                        data: null
-                    });
-                    map.addSource('link', {
-                        type: 'geojson',
-                        data: null
-                    });
-                    map.addSource('poi', {
-                        type: 'geojson',
-                        data: null
-                    });
+                // map.on('load', () => {
+                //     map.addSource('building', {
+                //         type: 'geojson',
+                //         data: null // 无数据时默认值必须为null
+                //     });
+                //     map.addSource('poi-face', {
+                //         type: 'geojson',
+                //         data: null
+                //     });
+                //     map.addSource('link', {
+                //         type: 'geojson',
+                //         data: null
+                //     });
+                //     map.addSource('poi', {
+                //         type: 'geojson',
+                //         data: null
+                //     });
 
-                    map.addLayer({
-                        id: 'building-layer',
-                        type: 'fill',
-                        source: 'building',
-                        layout: {},
-                        paint: {
-                            'fill-color': '#666',
-                            'fill-opacity': 0.2
-                        }
-                    });
+                //     map.addLayer({
+                //         id: 'building-layer',
+                //         type: 'fill',
+                //         source: 'building',
+                //         layout: {},
+                //         paint: {
+                //             'fill-color': '#666',
+                //             'fill-opacity': 0.2
+                //         }
+                //     });
 
-                    map.addLayer({
-                        id: 'poi-face-layer',
-                        type: 'fill',
-                        source: 'poi-face',
-                        layout: {},
-                        paint: {
-                            'fill-outline-color': '#999',
-                            'fill-color': '#999',
-                            'fill-opacity': 0.2
-                        }
-                    });
+                //     map.addLayer({
+                //         id: 'poi-face-layer',
+                //         type: 'fill',
+                //         source: 'poi-face',
+                //         layout: {},
+                //         paint: {
+                //             'fill-outline-color': '#999',
+                //             'fill-color': '#999',
+                //             'fill-opacity': 0.2
+                //         }
+                //     });
 
-                    map.addLayer({
-                        id: 'link-layer',
-                        type: 'line',
-                        source: 'link',
-                        layout: {},
-                        paint: {
-                            'line-opacity': 0.8,
-                            'line-color': '#aaa',
-                            'line-width': 2
-                        }
-                    });
+                //     map.addLayer({
+                //         id: 'link-layer',
+                //         type: 'line',
+                //         source: 'link',
+                //         layout: {},
+                //         paint: {
+                //             'line-opacity': 0.8,
+                //             'line-color': '#aaa',
+                //             'line-width': 2
+                //         }
+                //     });
 
-                    map.addLayer({
-                        id: 'poi-layer',
-                        type: 'circle',
-                        source: 'poi',
-                        layout: {
-                        },
-                        paint: {
-                            'circle-radius': 2,
-                            'circle-color': '#000'
-                        }
-                    });
+                //     map.addLayer({
+                //         id: 'poi-layer',
+                //         type: 'circle',
+                //         source: 'poi',
+                //         layout: {
+                //         },
+                //         paint: {
+                //             'circle-radius': 2,
+                //             'circle-color': '#000'
+                //         }
+                //     });
 
-                    map.addLayer({
-                        id: 'poi-symbol-layer',
-                        type: 'symbol',
-                        source: 'poi',
-                        layout: {
-                            'text-field': '{name}',
-                            'text-font': ['Open Sans Regular','Arial Unicode MS Regular'],
-                            'text-size': 12,
-                            'text-offset': [0, 0],
-                            'text-anchor': 'top'
-                        },
-                        paint: {
-                        }
-                    });
+                //     map.addLayer({
+                //         id: 'poi-symbol-layer',
+                //         type: 'symbol',
+                //         source: 'poi',
+                //         layout: {
+                //             'text-field': '{name}',
+                //             'text-font': ['Open Sans Regular','Arial Unicode MS Regular'],
+                //             'text-size': 12,
+                //             'text-offset': [0, 0],
+                //             'text-anchor': 'top'
+                //         },
+                //         paint: {
+                //         }
+                //     });
                     
-                    this.loadBuilding(6101000094).then(data => {
-                        if (data) {
-                            map.getSource('building').setData(data);
-                            map.flyTo({
-                                center: data.properties.center
-                            });
-                        }                                             
-                    });
+                //     this.loadBuilding(6101000094).then(data => {
+                //         if (data) {
+                //             map.getSource('building').setData(data);
+                //             map.flyTo({
+                //                 center: data.properties.center
+                //             });
+                //         }                                             
+                //     });
 
-                    this.loadPoiFace(61010000941001).then(res => {
-                        if (res) {
-                            map.getSource('poi-face').setData({
-                                type: 'FeatureCollection',
-                                features: res
-                            });
-                        }                        
-                    });
+                //     this.loadPoiFace(61010000941001).then(res => {
+                //         if (res) {
+                //             map.getSource('poi-face').setData({
+                //                 type: 'FeatureCollection',
+                //                 features: res
+                //             });
+                //         }                        
+                //     });
 
-                    this.loadLink(61010000941001).then(res => {
-                        if (res) {
-                            map.getSource('link').setData({
-                                type: 'FeatureCollection',
-                                features: res
-                            });
-                        }                        
-                    });
+                //     this.loadLink(61010000941001).then(res => {
+                //         if (res) {
+                //             map.getSource('link').setData({
+                //                 type: 'FeatureCollection',
+                //                 features: res
+                //             });
+                //         }                        
+                //     });
 
-                    this.loadPoi(61010000941001).then(res => {
-                        if (res) {
-                            map.getSource('poi').setData({
-                                type: 'FeatureCollection',
-                                features: res
-                            });
-                        }                        
-                    });
-                });
+                //     this.loadPoi(61010000941001).then(res => {
+                //         if (res) {
+                //             map.getSource('poi').setData({
+                //                 type: 'FeatureCollection',
+                //                 features: res
+                //             });
+                //         }                        
+                //     });
+                // });
                 
                 map.on('zoomend', (e) => {
                     console.log(map.getZoom())
