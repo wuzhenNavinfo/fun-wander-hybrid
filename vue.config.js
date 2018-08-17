@@ -1,4 +1,5 @@
 module.exports = {
+    baseUrl: '/widget',
     outputDir: 'widget', // apicloud指定的目录
     // assetsDir: 'static', // 静态文件目录
     devServer: {
