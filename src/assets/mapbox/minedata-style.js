@@ -93,7 +93,7 @@ const style = {
             'type': 'vector'
         }
     },
-    'sprite': `${Config.localhost}/mapbox/sprite/sprite`,
+    'sprite': `${Config.localhost}/res/mapbox/sprite/sprite`,
     'layers': [{
         'layout': {
             'visibility': 'visible'
@@ -12416,7 +12416,7 @@ const style = {
         'type': 'symbol',
         'minzoom': 17.0
     }],
-    'glyphs': `${Config.localhost}/mapbox/glyphs/{fontstack}/{range}`,
+    'glyphs': `${Config.localhost}/res/mapbox/glyphs/{fontstack}/{range}`,
     'version': 8
 }
 

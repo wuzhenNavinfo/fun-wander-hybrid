@@ -1,0 +1,13 @@
+<widget id="A6067144530735"  version="0.0.1">
+    <name>GouYanMovie</name>
+    <description>
+        My first App.
+    </description>
+    <author email="shawnnchen@163.com" href="//www.apicloud.com">
+        APICloud.SIR
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+    <preference name="windowBackground" value="#FFF" />
+    <permission name="call" />
+</widget>

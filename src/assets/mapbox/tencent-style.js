@@ -2,8 +2,8 @@ import Config from '../../config'
 
 const style = {
     'version': 8,
-    'sprite': `${Config.localhost}/mapbox/sprite/sprite`,
-    'glyphs': `${Config.localhost}/mapbox/glyphs/{fontstack}/{range}.pbf`,
+    'sprite': `${Config.localhost}/res/mapbox/sprite/sprite`,
+    'glyphs': `${Config.localhost}/res/mapbox/glyphs/{fontstack}/{range}.pbf`,
     'sources': {
         'raster-tiles': {
             'type': 'raster',

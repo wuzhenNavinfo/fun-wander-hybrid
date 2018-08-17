@@ -146,6 +146,10 @@
                         }                        
                     });
                 });
+                
+                map.on('zoomend', (e) => {
+                    console.log(map.getZoom())
+                })
             },
             loadBuilding: function(buildingId) {
                 return ajax.get(`/indoor/building/${buildingId}`).then(res => {
