@@ -7,7 +7,7 @@
     import L from 'leaflet'
     import ajax from '../utils/ajax'
     import util from '../utils/util'
-    import '../../node_modules/leaflet/dist/leaflet.css'
+    import 'leaflet/dist/leaflet.css'
 
     export default {
         name: 'LeafletMap',
@@ -20,11 +20,13 @@
                 const map = L.map('leafletMap', {
                     minZoom: 5,
                     maxZoom: 24,
-                }).setView([34.300590391379714, 108.94400235446722], 15)
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([34.300590391379714, 108.94400235446722], 17)
 
                 // 腾讯底图
                 L.tileLayer('http://{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0', {
-                    attribution: 'test',
+                    // attribution: 'test',
                     minZoom: 5,
                     maxZoom: 18,
                     id: 'mapbox.streets',
@@ -43,7 +45,7 @@
                             }
                         }).addTo(map);
 
-                        map.setView(data.properties.center, 18);
+                        map.setView(data.properties.center, 19);
                     }                                             
                 });
 
@@ -81,9 +83,19 @@
                                 fillOpacity: 0.2
                             },
                             pointToLayer: function (feature, latlng) {
-                                const myIcon = L.divIcon({html: feature.properties.name, className: 'div-icon'});
+                                return L.circleMarker(latlng);
+                            }
+                        }).addTo(map);
+
+                        L.geoJSON(res, {
+                            pointToLayer: function (feature, latlng) {
+                                const myIcon = L.divIcon({
+                                    html: feature.properties.name, 
+                                    className: 'div-icon',
+                                    iconSize: [50, 20],
+                                    iconAnchor: [25, -5],
+                                });
                                 return L.marker(latlng, {icon: myIcon});
-                                // return L.circleMarker(latlng);
                             }
                         }).addTo(map);
                     }                        
@@ -189,10 +201,5 @@
     .map-container {
         width: 100%;
         height: 100%;
-    }
-
-    .div-icon {
-        width: auto;
-        height: auto;
     }
 </style>
