@@ -108,7 +108,7 @@
                         return {
                             type: 'Feature',
                             properties: {
-                                id: temp.id,
+                                id: temp.building_id,
                                 kind: temp.kind,
                                 name: temp.name,
                                 center: temp.center_coordinate.split(',').map(it => parseFloat(it)).reverse()
@@ -131,7 +131,8 @@
                                     type: 'Feature',
                                     properties: {
                                         id: it.face_id,
-                                        kind: it.kind
+                                        poiId: it.poi_id,
+                                        poiKind: it.poi_kind
                                     },
                                     geometry: util.wktToGeojson(it.geometry)
                                 }
@@ -176,7 +177,7 @@
                                 return {
                                     type: 'Feature',
                                     properties: {
-                                        id: it.id,
+                                        id: it.poi_id,
                                         kind: it.kind,
                                         name: it.name,
                                         faceId: it.face_id,
