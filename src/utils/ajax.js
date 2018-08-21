@@ -1,10 +1,9 @@
 import axios from 'axios'
-// import config from '../config'
+import config from '../config'
 
 //当创建实例的时候配置默认配置
 const ajax = axios.create({
-    // baseURL: config.service.serviceUrl
-    baseURL: '/api' // 开发环境的跨域代理
+    baseURL: config.service.serviceUrl
 });
 
 const get = url => ajax.get(url).then(res => {

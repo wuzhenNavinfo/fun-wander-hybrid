@@ -1,24 +1,16 @@
 <template>
   <div id="app">
-    <LeafletMap/>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-import MapBoxMap from './components/MapBoxMap.vue'
-import LeafletMap from './components/LeafletMap.vue'
-import MineMap from './components/MineMap.vue'
+import router from './router/router.js'
 
 export default {
   name: 'app',
-  components: {
-    HelloWorld,
-    MapBoxMap,
-    LeafletMap,
-    MineMap
-  }
-}
+  router
+};
 </script>
 
 <style>
@@ -26,5 +18,9 @@ export default {
   font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
   width: 100%;
   height: 100%;
+}
+
+.div-icon {
+  text-align: center;
 }
 </style>

@@ -1,15 +1,16 @@
+const ENV = 'prod';
+
 const localhost = 'http://localhost:8080'; // 本地Web服务
 
-const server = 'http://localhost:5757'; // 服务接口服务
+const localService = '/api'; // 本地服务
 
-const serviceName = 'weapp'; // 服务程序名称
-
-const serviceUrl = server + '/' + serviceName;
+const remoteService = 'http://fs-road.navinfo.com/dev/trunk/funWander/service';  // 远程服务
+  
+const serviceUrl = ENV === 'dev' ? localService : remoteService; 
 
 var config = {
     localhost,
     service: {
-        server,
         serviceUrl
     },
     minedata: {
