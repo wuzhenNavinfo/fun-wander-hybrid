@@ -30,12 +30,15 @@
 
             if (this.$route.path === '/map/info') {
                 this.showBuiding();
-
             }
             // 如果是从地图选点进入的逻辑代码
             if (this.$route.path === '/map/point') {
                 this.showBuiding();
-                this.$bus.$emit(events.GETNEARPOINTS, [1, 2, 3, 4]);
+                this.loadFeatures(61010000941002);
+                this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
+                this.map.on('click', data => {
+                    this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
+                });
             }
         },
         destroyed() {
@@ -63,7 +66,9 @@
             },
             // 显示商场轮廓;
             showBuiding: function () {
-                this.loadBuilding(this.$route.query.id).then(data => {
+                const tmpId = this.$route.query.id ? this.$route.query.id : 6101000094;
+                if(!tmpId) throw Error('不是一个有效的商场id');
+                this.loadBuilding(tmpId).then(data => {
                     if (data) {
                         data.layer.addTo(this.map);
                         this.map.setView(data.center, 19);

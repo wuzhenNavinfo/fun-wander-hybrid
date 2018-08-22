@@ -1,6 +1,8 @@
 <template>
   <div class="areaDataList">
-    <h1>111111111111111111</h1>
+    <div v-for="item in areaList" @click="selectPoint(item)">
+      <mt-cell :title="item" :label="item"></mt-cell>
+    </div>
   </div>
 </template>
 
@@ -8,23 +10,20 @@
 import events from '@/utils/events'
 export default {
   name: 'areaDataList',
-  props: {
-    areaList: Array,
-    default: []
-  },
+  props: {},
   data() {
     return {
-
+      areaList: []
     }
   },
   methods: {
-    log() {
-      console.log(1211111111111);
+    selectPoint(eData) {
+      console.log(eData);
     }
   },
   mounted() {
     this.$bus.$on(events.GETNEARPOINTS, data => {
-      console.log(data);
+      this.areaList = data;
     });
   }
 }
@@ -34,10 +33,11 @@ export default {
 <style scoped>
   .areaDataList {
     position: absolute;
-    bottom: 0px;
+    bottom: 0;
     width: 100%;
     height: 200px;
     z-index: 1000;
-    background: red;
+    background: #fff;
+    overflow: auto;
   }
 </style>
