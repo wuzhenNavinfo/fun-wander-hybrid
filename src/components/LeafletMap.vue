@@ -1,5 +1,6 @@
 <template>
     <div id="leafletMap" class="map-container">
+        <router-view></router-view>
     </div>
 </template>
 
@@ -8,12 +9,22 @@
     import ajax from '../utils/ajax'
     import util from '../utils/util'
     import 'leaflet/dist/leaflet.css'
+    import events from '@/utils/events'
 
     export default {
         name: 'LeafletMap',
         props: {},
+        data() {
+            return {
+                map: null
+            };
+        },
         mounted: function() {
             this.createMap();
+            // 如果是从地图选点进入的逻辑代码
+            if (this.$route.path === '/map/point') {
+                this.$bus.$emit(events.GETNEARPOINTS, [1,2,3,4]);
+            }
         },
         methods: {
             createMap: function() {
@@ -41,7 +52,7 @@
                                 color: '#999',
                                 fill: true,
                                 fillColor: '#666',
-                                fillOpacity: 0.2
+                                fillOpacity: 0.3
                             }
                         }).addTo(map);
 
