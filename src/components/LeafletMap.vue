@@ -14,21 +14,37 @@
     export default {
         name: 'LeafletMap',
         props: {},
-        data() {
+        data: function () {
             return {
-                map: null
-            };
-        },
-        mounted: function() {
-            this.createMap();
-            // 如果是从地图选点进入的逻辑代码
-            if (this.$route.path === '/map/point') {
-                this.$bus.$emit(events.GETNEARPOINTS, [1,2,3,4]);
+                map: null,
+                layers: []
             }
         },
+        mounted: function () {
+            // 创建地图;
+            this.createMap();
+
+            this.$bus.$on(events.FLOORCHANGING, data => {
+                this.loadFeatures(data);
+            });
+
+            if (this.$route.path === '/map/info') {
+                this.showBuiding();
+
+            }
+            // 如果是从地图选点进入的逻辑代码
+            if (this.$route.path === '/map/point') {
+                this.showBuiding();
+                this.$bus.$emit(events.GETNEARPOINTS, [1, 2, 3, 4]);
+            }
+        },
+        destroyed() {
+            this.$bus.$off(events.FLOORCHANGING);
+        },
         methods: {
-            createMap: function() {
-                const map = L.map('leafletMap', {
+            // 加载腾讯地图;
+            createMap: function () {
+                this.map = L.map('leafletMap', {
                     minZoom: 5,
                     maxZoom: 24,
                     zoomControl: false,
@@ -43,158 +59,158 @@
                     id: 'mapbox.streets',
                     subdomains: ['rt0', 'rt1', 'rt2', 'rt3'],
                     tms: true
-                }).addTo(map)
-
-                this.loadBuilding(6101000094).then(data => {
+                }).addTo(this.map)
+            },
+            // 显示商场轮廓;
+            showBuiding: function () {
+                this.loadBuilding(this.$route.query.id).then(data => {
                     if (data) {
-                        L.geoJSON(data, {
+                        data.layer.addTo(this.map);
+                        this.map.setView(data.center, 19);
+                    }
+                });
+            },
+            // 获得商场轮廓图层;
+            loadBuilding: function (buildingId) {
+                return ajax.get(`/indoor/building/${buildingId}`).then(res => {
+                    if (res && res.data && res.data.length > 0) {
+                        const style = {
                             style: {
                                 color: '#999',
                                 fill: true,
                                 fillColor: '#666',
-                                fillOpacity: 0.3
+                                fillOpacity: 0.2
                             }
-                        }).addTo(map);
+                        };
+                        const feature = {
+                            type: 'Feature',
+                            properties: {
+                                id: res.data[0].building_id,
+                                kind: res.data[0].kind,
+                                name: res.data[0].name,
+                                center: res.data[0].center_coordinate.split(',').map(it => parseFloat(
+                                    it)).reverse()
+                            },
+                            geometry: util.wktToGeojson(res.data[0].geometry)
+                        }
+                        const building = L.geoJSON(feature, style);
+                        return {
+                            layer: building,
+                            center: feature.properties.center
+                        };
+                    } else {
+                        return null
+                    }
+                }).catch(err => {
+                    console.error(err)
+                    return null
+                })
+            },
 
-                        map.setView(data.properties.center, 19);
-                    }                                             
+            loadFeatures: function (floorId) {
+                this.layers.forEach(item => {
+                    if (item) {
+                        item.remove();
+                    }
                 });
+                const layers = [this.loadPoiFace(floorId), this.loadPoi(floorId), this.loadLink(floorId)];
+                Promise.all(layers).then(result => {
+                    this.layers = result;
+                    result.map(item => {
+                        if (item && item.addTo) {
+                            item.addTo(this.map);
+                        }
+                    })
+                });
+            },
 
-                this.loadPoiFace(61010000941001).then(res => {
-                    if (res) {
-                        L.geoJSON(res, {
+            loadPoiFace: function (floorId) {
+                return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
+                    if (res && res.data && res.data.length > 0) {
+                        const feature = res.data.map(it => {
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.face_id,
+                                    poiId: it.poi_id,
+                                    poiKind: it.poi_kind
+                                },
+                                geometry: util.wktToGeojson(it.geometry)
+                            }
+                        });
+                        const style = {
                             style: {
                                 color: '#999',
                                 fill: true,
-                                fillColor: '#999',
+                                fillColor: '#666',
                                 fillOpacity: 0.2
                             }
-                        }).addTo(map);
-                    }                        
-                });
-
-                this.loadLink(61010000941001).then(res => {
-                    if (res) {
-                        L.geoJSON(res, {
+                        };
+                        return L.geoJSON(feature, style);
+                    } else {
+                        return null
+                    }
+                }).catch(err => {
+                    console.error(err)
+                    return null
+                })
+            },
+            loadLink: function (floorId) {
+                return ajax.get(`/indoor/building/floor/link/${floorId}`).then(res => {
+                    if (res && res.data && res.data.length > 0) {
+                        const feature = res.data.map(it => {
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.link_id,
+                                    kind: it.kind,
+                                    type: it.type,
+                                    snodeId: it.snode_id,
+                                    enodeId: it.enode_id
+                                },
+                                geometry: util.wktToGeojson(it.geometry)
+                            }
+                        });
+                        const style = {
                             style: {
                                 color: '#ddd'
                             }
-                        }).addTo(map);
-                    }                        
-                });
-
-                this.loadPoi(61010000941001).then(res => {
-                    if (res) {
-                        L.geoJSON(res, {
+                        };
+                        return L.geoJSON(feature, style);
+                    } else {
+                        return null
+                    }
+                }).catch(err => {
+                    console.error(err)
+                    return null
+                })
+            },
+            loadPoi: function (floorId) {
+                return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
+                    if (res && res.data && res.data.length > 0) {
+                        const feature = res.data.map(it => {
+                            const geom = util.wktToGeojson(it.geometry)
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.poi_id,
+                                    kind: it.kind,
+                                    name: it.name,
+                                    faceId: it.face_id,
+                                },
+                                geometry: geom
+                            }
+                        });
+                        const style = {
                             style: {
                                 radius: 2,
                                 color: '#999',
                                 fill: true,
                                 fillColor: '#999',
                                 fillOpacity: 0.2
-                            },
-                            pointToLayer: function (feature, latlng) {
-                                return L.circleMarker(latlng);
                             }
-                        }).addTo(map);
-
-                        L.geoJSON(res, {
-                            pointToLayer: function (feature, latlng) {
-                                const myIcon = L.divIcon({
-                                    html: feature.properties.name, 
-                                    className: 'div-icon',
-                                    iconSize: [50, 20],
-                                    iconAnchor: [25, -5],
-                                });
-                                return L.marker(latlng, {icon: myIcon});
-                            }
-                        }).addTo(map);
-                    }                        
-                });
-            },
-            loadBuilding: function(buildingId) {
-                return ajax.get(`/indoor/building/${buildingId}`).then(res => {
-                    if (res && res.data && res.data.length > 0) {
-                        const temp = res.data[0];
-                        return {
-                            type: 'Feature',
-                            properties: {
-                                id: temp.id,
-                                kind: temp.kind,
-                                name: temp.name,
-                                center: temp.center_coordinate.split(',').map(it => parseFloat(it)).reverse()
-                            },
-                            geometry: util.wktToGeojson(temp.geometry)
-                        }
-                    } else {
-                        return null
-                    }
-                }).catch(err => {
-                    console.error(err)
-                    return null
-                })
-            },
-            loadPoiFace: function(floorId) {
-                return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
-                    if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: it.face_id,
-                                        kind: it.kind
-                                    },
-                                    geometry: util.wktToGeojson(it.geometry)
-                                }
-                            })
-                    } else {
-                        return null
-                    }
-                }).catch(err => {
-                    console.error(err)
-                    return null
-                })
-            },
-            loadLink: function(floorId) {
-                return ajax.get(`/indoor/building/floor/link/${floorId}`).then(res => {
-                    if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: it.link_id,
-                                        kind: it.kind,
-                                        type: it.type,
-                                        snodeId: it.snode_id,
-                                        enodeId: it.enode_id
-                                    },
-                                    geometry: util.wktToGeojson(it.geometry)
-                                }
-                            })
-                    } else {
-                        return null
-                    }
-                }).catch(err => {
-                    console.error(err)
-                    return null
-                })
-            },
-            loadPoi: function(floorId) {
-                return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
-                    if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
-                                const geom = util.wktToGeojson(it.geometry)
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: it.id,
-                                        kind: it.kind,
-                                        name: it.name,
-                                        faceId: it.face_id,
-                                    },
-                                    geometry: geom
-                                }
-                            })
+                        };
+                        return L.geoJSON(feature, style);
                     } else {
                         return null
                     }
@@ -209,6 +225,12 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
+    .container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
     .map-container {
         width: 100%;
         height: 100%;

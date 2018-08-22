@@ -1,6 +1,8 @@
 <template>
 	<div>
-		<mt-cell v-for="item in buildings" :title="item.name" :label="item.address" to="/map" is-link></mt-cell>
+        <div v-for="item in buildings" @click="toMap(item);">
+            <mt-cell :title="item.name" :label="item.address" is-link></mt-cell>
+        </div>
 	</div>  	
 </template>
 
@@ -25,6 +27,10 @@ export default {
     });
   },
   methods: {
+    toMap: function (item) {
+        this.$router.push({path:'/map/info' , query: {id: item.building_id, name: item.name}})
+    },
+
     loadBuilding: function(buildingId) {
       return ajax
         .get('/indoor/building')
