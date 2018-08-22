@@ -9,8 +9,11 @@
         <div id="leafletMap" class="map-container"></div>
         <div class="footer">
             <div class="title" @click="openSelectPanel();">
-                <i class="mintui mintui-search"></i>
-                <span class="name">选择楼层</span>
+                <i class="left-image">
+                    <img v-if="!openSelectPanelFlag" src="../assets/slideUp.png"/>
+                    <img v-if="openSelectPanelFlag" src="../assets/slideDown.png"/>
+                </i>
+                <!--<span class="name">{{selectedFloor.properties.name}}&#45;&#45;{{item.properties.infor}}</span>-->
             </div>
             <div class="content" v-show="openSelectPanelFlag">
                 <div v-for="item in flowInfo" @click="selectFloor(item)">
@@ -324,7 +327,13 @@
     }
     .container .header .title, .container .footer .title {
         padding: 10px;
-        background-color: #c3c3c3;
+        background-color: #26a2ff;
+        color: black;
+    }
+    .container .footer .left-image img {
+        width: 20px;
+        height: 20px;
+        vertical-align: bottom;
     }
     .container .footer .content {
         height: 150px;
