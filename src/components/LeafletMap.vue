@@ -1,5 +1,24 @@
 <template>
-    <div id="leafletMap" class="map-container">
+    <div class="container">
+        <div class="header">
+            <div class="title" @click="goBack();">
+                <i class="mintui mintui-back"></i>
+                <span class="name">{{currentBuliding.name}}</span>
+            </div>
+        </div>
+        <div id="leafletMap" class="map-container"></div>
+        <div class="footer">
+            <div class="title" @click="openSelectPanel();">
+                <i class="mintui mintui-search"></i>
+                <span class="name">选择楼层</span>
+            </div>
+            <div class="content" v-show="openSelectPanelFlag">
+                <div v-for="item in flowInfo" @click="selectFloor(item)">
+                    <mt-cell v-if="item.properties.id==selectedFloor.properties.id" icon="success" :title="item.properties.name" :label="item.properties.infor"></mt-cell>
+                    <mt-cell v-if="item.properties.id!=selectedFloor.properties.id" :title="item.properties.name" :label="item.properties.infor"></mt-cell>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -12,12 +31,117 @@
     export default {
         name: 'LeafletMap',
         props: {},
+        data: function () {
+          return {
+              map: null,
+              currentBuliding: {},
+              flowInfo: [],
+              selectedFloor: null,
+              layers: null,
+              openSelectPanelFlag: false
+          }
+        },
         mounted: function() {
+            this.currentBuliding = {
+                name: this.$route.query.name,
+                id: this.$route.query.id
+            };
             this.createMap();
         },
         methods: {
+            goBack: function () { // 返回方法
+              this.$router.push('/');
+            },
+            openSelectPanel() {  // 打开选择楼层的面板
+                this.openSelectPanelFlag = !this.openSelectPanelFlag;
+            },
+            selectFloor(item) { // 选择楼层
+                this.flowInfo.forEach(item => {
+                    item.selected = false;
+                });
+                this.selectedFloor = item;
+                this.layers.forEach(item => {
+                    if (item) {
+                        item.remove();
+                    }
+                });
+                this.loadFeatures(item.properties.id);
+            },
+            loadFeatures (floorId) {
+                const that = this;
+                that.layers = [];
+                var p1 = this.loadPoiFace(floorId).then(res => {
+                    var layer = null;
+                    if (res) {
+                        layer = L.geoJSON(res, {
+                            style: {
+                                color: '#999',
+                                fill: true,
+                                fillColor: '#999',
+                                fillOpacity: 0.2
+                            }
+                        }).addTo(that.map);
+                    }
+                    return [layer];
+                });
+
+                var p2 = this.loadLink(floorId).then(res => {
+                    var layer = null;
+                    if (res) {
+                        layer = L.geoJSON(res, {
+                            style: {
+                                color: '#ddd'
+                            }
+                        }).addTo(that.map);
+                    }
+                    return [layer];
+                });
+
+                var p3 = this.loadPoi(floorId).then(res => {
+                    var layer1 = null;
+                    var layer2 = null;
+                    if (res) {
+                        layer1 = L.geoJSON(res, {
+                            style: {
+                                radius: 2,
+                                color: '#999',
+                                fill: true,
+                                fillColor: '#999',
+                                fillOpacity: 0.2
+                            },
+                            pointToLayer: function (feature, latlng) {
+                                var circleMarker = L.circleMarker(latlng);
+                                circleMarker.on('click', function (e) {
+                                });
+                                return circleMarker;
+                            }
+                        }).addTo(that.map);
+
+                        layer2 = L.geoJSON(res, {
+                            pointToLayer: function (feature, latlng) {
+                                const myIcon = L.divIcon({
+                                    html: feature.properties.name,
+                                    className: 'div-icon',
+                                    iconSize: [50, 20],
+                                    iconAnchor: [25, -5],
+                                });
+                                return L.marker(latlng, {icon: myIcon});
+                            }
+                        }).addTo(that.map);
+                    }
+                    return [layer1, layer2];
+                });
+
+                Promise.all([p1, p2, p3]).then(function (data) {
+                    data[2][0].bringToFront(); // 将poi点的layer放置在最上面否则点击事件不起作用
+                    data.forEach(item => {
+                        that.layers = that.layers.concat(item);
+                    });
+                });
+            },
+
             createMap: function() {
-                const map = L.map('leafletMap', {
+                this.map = L.map('leafletMap', {
                     minZoom: 5,
                     maxZoom: 24,
                     zoomControl: false,
@@ -32,9 +156,10 @@
                     id: 'mapbox.streets',
                     subdomains: ['rt0', 'rt1', 'rt2', 'rt3'],
                     tms: true
-                }).addTo(map)
+                }).addTo(this.map)
 
-                this.loadBuilding(6101000094).then(data => {
+                var that = this;
+                this.loadBuilding(this.currentBuliding.id).then(data => {
                     if (data) {
                         L.geoJSON(data, {
                             style: {
@@ -43,62 +168,16 @@
                                 fillColor: '#666',
                                 fillOpacity: 0.2
                             }
-                        }).addTo(map);
+                        }).addTo(that.map);
 
-                        map.setView(data.properties.center, 19);
-                    }                                             
+                        that.map.setView(data.properties.center, 19);
+                    }
                 });
 
-                this.loadPoiFace(61010000941001).then(res => {
-                    if (res) {
-                        L.geoJSON(res, {
-                            style: {
-                                color: '#999',
-                                fill: true,
-                                fillColor: '#999',
-                                fillOpacity: 0.2
-                            }
-                        }).addTo(map);
-                    }                        
-                });
-
-                this.loadLink(61010000941001).then(res => {
-                    if (res) {
-                        L.geoJSON(res, {
-                            style: {
-                                color: '#ddd'
-                            }
-                        }).addTo(map);
-                    }                        
-                });
-
-                this.loadPoi(61010000941001).then(res => {
-                    if (res) {
-                        L.geoJSON(res, {
-                            style: {
-                                radius: 2,
-                                color: '#999',
-                                fill: true,
-                                fillColor: '#999',
-                                fillOpacity: 0.2
-                            },
-                            pointToLayer: function (feature, latlng) {
-                                return L.circleMarker(latlng);
-                            }
-                        }).addTo(map);
-
-                        L.geoJSON(res, {
-                            pointToLayer: function (feature, latlng) {
-                                const myIcon = L.divIcon({
-                                    html: feature.properties.name, 
-                                    className: 'div-icon',
-                                    iconSize: [50, 20],
-                                    iconAnchor: [25, -5],
-                                });
-                                return L.marker(latlng, {icon: myIcon});
-                            }
-                        }).addTo(map);
-                    }                        
+                this.loadFloorByBuilding(this.currentBuliding.id).then(res => {
+                    this.flowInfo = res;
+                    this.selectedFloor = res[0];
+                    this.loadFeatures(res[0].properties.id); // 默认加载第一层的信息
                 });
             },
             loadBuilding: function(buildingId) {
@@ -191,6 +270,30 @@
                     console.error(err)
                     return null
                 })
+            },
+            loadFloorByBuilding: function (buildingId) {
+                return ajax.get(`/indoor/building/floor/${buildingId}`).then(res => {
+                    if (res && res.data && res.data.length > 0) {
+                        return res.data.map(it => {
+                            const geom = util.wktToGeojson(it.geometry)
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.fl_id,
+                                    infor: it.fl_infor,
+                                    name: it.fl_name,
+                                    num: it.fl_num,
+                                },
+                                geometry: geom
+                            }
+                        })
+                    } else {
+                        return null
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    return null
+                })
             }
         }
     };
@@ -198,6 +301,40 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
+    .container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    .container .header {
+        position: absolute;
+        width: 100%;
+        z-index: 999;
+        background-color: #c3c3c3;
+        opacity: 1;
+        top: 0px;
+        left: 0px;
+    }
+    .container .footer {
+        position: absolute;
+        width: 100%;
+        z-index: 999;
+        left: 0px;
+        bottom: 0px;
+    }
+    .container .header .title, .container .footer .title {
+        padding: 10px;
+        background-color: #c3c3c3;
+    }
+    .container .footer .content {
+        height: 150px;
+        max-height: 150px;
+        background-color: #ffffff;
+        overflow: auto;
+    }
+    .container .header .name, .container .footer .name {
+        margin-left: 6px;
+    }
     .map-container {
         width: 100%;
         height: 100%;
