@@ -36,17 +36,20 @@ export default {
         opacity: 1;
         top: 0px;
         left: 0px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-    }
-    .header > div {
-      flex: 1;
     }
     .header .back {
-      background-color: #c3c3c3;
+      position: absolute;
+      height: 40px;
+      line-height: 40px;
+      z-index: 10;
     }
     .header .title {
+      position: absolute;
+      width: 100%;
+      z-index: 9;
+      height: 40px;
+      line-height: 40px;
+      text-align: center;
       color: #15a8eb;
     }
 </style>
