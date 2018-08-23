@@ -82,7 +82,7 @@
                 }).addTo(this.map)
             },
             getMapObj: function() {
-                return vueObj.data.map;
+                return vueObj.map;
             },
             // 显示商场轮廓;
             showBuiding: function () {
