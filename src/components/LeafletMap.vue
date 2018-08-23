@@ -12,133 +12,65 @@
     import ajax from '../utils/ajax'
     import util from '../utils/util'
     import 'leaflet/dist/leaflet.css'
+    import events from '@/utils/events'
+    import appHeader from '@/components/header'
 
     var vueObj = null;
 
     export default {
         name: 'LeafletMap',
         props: {},
-        data: function () {
-          return {
-              map: null,
-              currentBuliding: {},
-              flowInfo: [],
-              selectedFloor: null,
-              layers: null,
-              openSelectPanelFlag: false
-          }
+        components: {
+            appHeader
         },
-        mounted: function() {
+        data: function () {
+            return {
+                map: null,
+                layers: []
+            }
+        },
+        mounted: function () {
             vueObj = this;
-            this.currentBuliding = {
-                name: this.$route.query.name,
-                id: this.$route.query.id
-            };
+            // 创建地图;
             this.createMap();
+            this.$bus.$on(events.FLOORCHANGING, data => {
+                this.loadFeatures(data);
+            });
+            if (this.$route.path === '/map/info') {
+                this.showBuiding();
+            }
+            // 如果是从地图选点进入的逻辑代码
+            if (this.$route.path === '/map/point') {
+                this.showBuiding();
+                this.loadFeatures(61010000941002);
+                // 假定这是当前位置;
+                let locationMarker = null;
+                this.map.panTo([34.300590391379714, 108.94400235446722]);
+                locationMarker = L.marker([34.300590391379714, 108.94400235446722]).addTo(this.map);
+                this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
+                this.map.on('click', data => {
+                    // 移动点
+                    const currentLat = data.latlng.lat;
+                    const currentlng = data.latlng.lng;
+                    locationMarker && this.map.removeLayer(locationMarker);
+                    this.map.panTo([currentLat, currentlng]);
+                    locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
+                    this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
+                });
+            }
+        },
+        destroyed() {
+            this.$bus.$off(events.FLOORCHANGING);
         },
         methods: {
-            goBack: function () { // 返回方法
-              this.$router.push('/');
-            },
-            openSelectPanel() {  // 打开选择楼层的面板
-                this.openSelectPanelFlag = !this.openSelectPanelFlag;
-            },
-            getMapObj(){//获取加载的地图对象
-                return vueObj.map;
-            },
-            selectFloor(item) { // 选择楼层
-                this.flowInfo.forEach(item => {
-                    item.selected = false;
-                });
-                this.selectedFloor = item;
-                this.layers.forEach(item => {
-                    if (item) {
-                        item.remove();
-                    }
-                });
-                this.loadFeatures(item.properties.id);
-            },
-            loadFeatures (floorId) {
-                const that = this;
-                that.layers = [];
-                var p1 = this.loadPoiFace(floorId).then(res => {
-                    var layer = null;
-                    if (res) {
-                        layer = L.geoJSON(res, {
-                            style: {
-                                color: '#999',
-                                fill: true,
-                                fillColor: '#999',
-                                fillOpacity: 0.2
-                            }
-                        }).addTo(that.map);
-                    }
-                    return [layer];
-                });
-
-                var p2 = this.loadLink(floorId).then(res => {
-                    var layer = null;
-                    if (res) {
-                        layer = L.geoJSON(res, {
-                            style: {
-                                color: '#ddd'
-                            }
-                        }).addTo(that.map);
-                    }
-                    return [layer];
-                });
-
-                var p3 = this.loadPoi(floorId).then(res => {
-                    var layer1 = null;
-                    var layer2 = null;
-                    if (res) {
-                        layer1 = L.geoJSON(res, {
-                            style: {
-                                radius: 2,
-                                color: '#999',
-                                fill: true,
-                                fillColor: '#999',
-                                fillOpacity: 0.2
-                            },
-                            pointToLayer: function (feature, latlng) {
-                                var circleMarker = L.circleMarker(latlng);
-                                circleMarker.on('click', function (e) {
-                                });
-                                return circleMarker;
-                            }
-                        }).addTo(that.map);
-
-                        layer2 = L.geoJSON(res, {
-                            pointToLayer: function (feature, latlng) {
-                                const myIcon = L.divIcon({
-                                    html: feature.properties.name,
-                                    className: 'div-icon',
-                                    iconSize: [50, 20],
-                                    iconAnchor: [25, -5],
-                                });
-                                return L.marker(latlng, {icon: myIcon});
-                            }
-                        }).addTo(that.map);
-                    }
-                    return [layer1, layer2];
-                });
-
-                Promise.all([p1, p2, p3]).then(function (data) {
-                    data[2][0].bringToFront(); // 将poi点的layer放置在最上面否则点击事件不起作用
-                    data.forEach(item => {
-                        that.layers = that.layers.concat(item);
-                    });
-                });
-            },
-
-            createMap: function() {
+            // 加载腾讯地图;
+            createMap: function () {
                 this.map = L.map('leafletMap', {
                     minZoom: 5,
                     maxZoom: 24,
                     zoomControl: false,
                     attributionControl: false
                 }).setView([34.300590391379714, 108.94400235446722], 17)
-
                 // 腾讯底图
                 L.tileLayer('http://{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0', {
                     // attribution: 'test',
@@ -148,43 +80,49 @@
                     subdomains: ['rt0', 'rt1', 'rt2', 'rt3'],
                     tms: true
                 }).addTo(this.map)
-
-                var that = this;
-                this.loadBuilding(this.currentBuliding.id).then(data => {
+            },
+            getMapObj: function() {
+                return vueObj.data.map;
+            },
+            // 显示商场轮廓;
+            showBuiding: function () {
+                const tmpId = this.$route.query.id ? this.$route.query.id : 6101000094;
+                if(!tmpId) throw Error('不是一个有效的商场id');
+                this.loadBuilding(tmpId).then(data => {
                     if (data) {
-                        L.geoJSON(data, {
+                        data.layer.addTo(this.map);
+                        this.map.setView(data.center, 19);
+                    }
+                });
+            },
+            // 获得商场轮廓图层;
+            loadBuilding: function (buildingId) {
+                return ajax.get(`/indoor/building/${buildingId}`).then(res => {
+                    if (res && res.data && res.data.length > 0) {
+                        const style = {
                             style: {
                                 color: '#999',
                                 fill: true,
                                 fillColor: '#666',
                                 fillOpacity: 0.2
                             }
-                        }).addTo(that.map);
-
-                        that.map.setView(data.properties.center, 19);
-                    }
-                });
-
-                this.loadFloorByBuilding(this.currentBuliding.id).then(res => {
-                    this.flowInfo = res;
-                    this.selectedFloor = res[0];
-                    this.loadFeatures(res[0].properties.id); // 默认加载第一层的信息
-                });
-            },
-            loadBuilding: function(buildingId) {
-                return ajax.get(`/indoor/building/${buildingId}`).then(res => {
-                    if (res && res.data && res.data.length > 0) {
-                        const temp = res.data[0];
-                        return {
+                        };
+                        const feature = {
                             type: 'Feature',
                             properties: {
-                                id: temp.building_id,
-                                kind: temp.kind,
-                                name: temp.name,
-                                center: temp.center_coordinate.split(',').map(it => parseFloat(it)).reverse()
+                                id: res.data[0].building_id,
+                                kind: res.data[0].kind,
+                                name: res.data[0].name,
+                                center: res.data[0].center_coordinate.split(',').map(it => parseFloat(
+                                    it)).reverse()
                             },
-                            geometry: util.wktToGeojson(temp.geometry)
+                            geometry: util.wktToGeojson(res.data[0].geometry)
                         }
+                        const building = L.geoJSON(feature, style);
+                        return {
+                            layer: building,
+                            center: feature.properties.center
+                        };
                     } else {
                         return null
                     }
@@ -193,20 +131,45 @@
                     return null
                 })
             },
-            loadPoiFace: function(floorId) {
+            loadFeatures: function (floorId) {
+                this.layers.forEach(item => {
+                    if (item) {
+                        item.remove();
+                    }
+                });
+                const layers = [this.loadPoiFace(floorId),  this.loadLink(floorId), this.loadPoi(floorId)];
+                Promise.all(layers).then(result => {
+                    this.layers = result;
+                    result.map(item => {
+                        if (item && item.addTo) {
+                            item.addTo(this.map);
+                        }
+                    })
+                });
+            },
+            loadPoiFace: function (floorId) {
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: it.face_id,
-                                        poiId: it.poi_id,
-                                        poiKind: it.poi_kind
-                                    },
-                                    geometry: util.wktToGeojson(it.geometry)
-                                }
-                            })
+                        const feature = res.data.map(it => {
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.face_id,
+                                    poiId: it.poi_id,
+                                    poiKind: it.poi_kind
+                                },
+                                geometry: util.wktToGeojson(it.geometry)
+                            }
+                        });
+                        const style = {
+                            style: {
+                                color: '#999',
+                                fill: true,
+                                fillColor: '#666',
+                                fillOpacity: 0.2
+                            }
+                        };
+                        return L.geoJSON(feature, style);
                     } else {
                         return null
                     }
@@ -215,22 +178,28 @@
                     return null
                 })
             },
-            loadLink: function(floorId) {
+            loadLink: function (floorId) {
                 return ajax.get(`/indoor/building/floor/link/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: it.link_id,
-                                        kind: it.kind,
-                                        type: it.type,
-                                        snodeId: it.snode_id,
-                                        enodeId: it.enode_id
-                                    },
-                                    geometry: util.wktToGeojson(it.geometry)
-                                }
-                            })
+                        const feature = res.data.map(it => {
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.link_id,
+                                    kind: it.kind,
+                                    type: it.type,
+                                    snodeId: it.snode_id,
+                                    enodeId: it.enode_id
+                                },
+                                geometry: util.wktToGeojson(it.geometry)
+                            }
+                        });
+                        const style = {
+                            style: {
+                                color: '#ddd'
+                            }
+                        };
+                        return L.geoJSON(feature, style);
                     } else {
                         return null
                     }
@@ -239,51 +208,37 @@
                     return null
                 })
             },
-            loadPoi: function(floorId) {
+            loadPoi: function (floorId) {
                 return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
-                                const geom = util.wktToGeojson(it.geometry)
-                                return {
-                                    type: 'Feature',
-                                    properties: {
-                                        id: it.poi_id,
-                                        kind: it.kind,
-                                        name: it.name,
-                                        faceId: it.face_id,
-                                    },
-                                    geometry: geom
-                                }
-                            })
-                    } else {
-                        return null
-                    }
-                }).catch(err => {
-                    console.error(err)
-                    return null
-                })
-            },
-            loadFloorByBuilding: function (buildingId) {
-                return ajax.get(`/indoor/building/floor/${buildingId}`).then(res => {
-                    if (res && res.data && res.data.length > 0) {
-                        return res.data.map(it => {
+                        const feature = res.data.map(it => {
                             const geom = util.wktToGeojson(it.geometry)
                             return {
                                 type: 'Feature',
                                 properties: {
-                                    id: it.fl_id,
-                                    infor: it.fl_infor,
-                                    name: it.fl_name,
-                                    num: it.fl_num,
+                                    id: it.poi_id,
+                                    kind: it.kind,
+                                    name: it.name,
+                                    faceId: it.face_id,
                                 },
                                 geometry: geom
                             }
-                        })
+                        });
+                        const style = {
+                            style: {
+                                radius: 2,
+                                color: '#999',
+                                fill: true,
+                                fillColor: '#999',
+                                fillOpacity: 0.2
+                            }
+                        };
+                        return L.geoJSON(feature, style);
                     } else {
                         return null
                     }
                 }).catch(err => {
-                    console.error(err);
+                    console.error(err)
                     return null
                 })
             }
@@ -298,35 +253,6 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-    }
-    .container .header {
-        position: absolute;
-        width: 100%;
-        z-index: 999;
-        background-color: #c3c3c3;
-        opacity: 1;
-        top: 0px;
-        left: 0px;
-    }
-    .container .footer {
-        position: absolute;
-        width: 100%;
-        z-index: 999;
-        left: 0px;
-        bottom: 0px;
-    }
-    .container .header .title, .container .footer .title {
-        padding: 10px;
-        background-color: #c3c3c3;
-    }
-    .container .footer .content {
-        height: 150px;
-        max-height: 150px;
-        background-color: #ffffff;
-        overflow: auto;
-    }
-    .container .header .name, .container .footer .name {
-        margin-left: 6px;
     }
     .map-container {
         width: 100%;
