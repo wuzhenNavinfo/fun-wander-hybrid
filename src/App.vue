@@ -15,12 +15,14 @@ export default {
 
 <style>
 #app {
-  font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  font-family: 'Source Han Sans SC','PingFangSC-Medium','Microsoft YaHei','微软雅黑';
   width: 100%;
   height: 100%;
 }
 
 .div-icon {
+  font-family: 'Source Han Sans SC','PingFangSC-Medium','Microsoft YaHei','微软雅黑';
   text-align: center;
+  color:#665c59;
 }
 </style>

@@ -97,9 +97,9 @@
                     if (res && res.data && res.data.length > 0) {
                         const style = {
                             style: {
-                                color: '#999',
+                                color: '#d1a990',//商城边框色
                                 fill: true,
-                                fillColor: '#666',
+                                fillColor: '#f8c0e3',//商城地面色
                                 fillOpacity: 0.2
                             }
                         };
@@ -154,6 +154,31 @@
             loadPoiFace: function (floorId) {
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
+                        var colos = {
+                            9203002: '#fd7676',//公共受限区域
+                            9205000: '#ddd',//空置单元
+
+                            1103003: '#befe73',//客梯
+                            1102000: '#befe73',//楼梯
+                            1103001: '#befe73',//扶梯
+                            
+                            1303014: '#f69d70',
+                            1303004: '#d9ceff',
+                            1303020: '#f1d35b',//体育
+                            1303005: '#f69d70',//金
+                            1303015: '#fe9104',//玛斯威顿
+                            1303020: '#c6a5a3',//安踏体育
+                            1303001: '#fb8ec6',//服装
+                            1303002: '#c6a5a3',//鞋
+                            1304000: '#81effe',//保健
+                            1303000: '#f69d70',//商铺
+                            1306004: '#04feef',//中国移动
+                            1303007: '#f1d35b',//手机
+
+                            2707000: '#affed1',//医药超市
+                            2301000: '#d9ceff',//zhiao
+                            1303009: '#f69d70',//酒
+                        };
                         const feature = res.data.map(it => {
                             return {
                                 type: 'Feature',
@@ -166,12 +191,14 @@
                             }
                         });
                         const style = {
-                            style: {
-                                color: '#999',
+                            style: function(feature) {
+                                console.info(feature);
+                                return {
+                                color: '#cecece', //店铺边框色彩
                                 fill: true,
-                                fillColor: '#666',
-                                fillOpacity: 0.2
-                            }
+                                fillColor: colos[feature.properties.poiKind] ?  colos[feature.properties.poiKind] : '#f1d35b',//店铺内部色彩
+                                fillOpacity: 0.9
+                            }}
                         };
                         return [L.geoJSON(feature, style)];
                     } else {
@@ -200,7 +227,7 @@
                         });
                         const style = {
                             style: {
-                                color: '#ddd'
+                                color: '#fff'//线路色彩
                             }
                         };
                         return [L.geoJSON(feature, style)];
@@ -233,9 +260,9 @@
                         var layer1 = L.geoJSON(feature, {
                             style: {
                                 radius: 2,
-                                color: '#999',
+                                color: '#000',
                                 fill: true,
-                                fillColor: '#999',
+                                fillColor: '#000',
                                 fillOpacity: 1
                             },
                             pointToLayer: function (feature, latlng) {
