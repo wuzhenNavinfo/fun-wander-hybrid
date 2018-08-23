@@ -1,7 +1,9 @@
 <template>
-    <div id="leafletMap" class="map-container">
+    <div class="container">
         <app-header></app-header>
-        <router-view></router-view>
+        <div id="leafletMap" class="map-container">
+            <router-view></router-view>
+        </div>
     </div>
 </template>
 
@@ -275,10 +277,11 @@
     .container {
         width: 100%;
         height: 100%;
-        position: relative;
+        display: flex;
+        flex-direction: column;
     }
     .map-container {
         width: 100%;
-        height: 100%;
+        flex: 1;
     }
 </style>
