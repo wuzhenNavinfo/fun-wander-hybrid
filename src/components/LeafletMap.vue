@@ -1,9 +1,8 @@
 <template>
     <div class="container">
         <app-header></app-header>
-        <div id="leafletMap" class="map-container">
-            <router-view></router-view>
-        </div>
+        <div id="leafletMap" class="map-container"></div>
+        <router-view></router-view>
     </div>
 </template>
 
@@ -135,12 +134,18 @@
                         item.remove();
                     }
                 });
+                this.layers = [];
+                var that = this;
                 const layers = [this.loadPoiFace(floorId),  this.loadLink(floorId), this.loadPoi(floorId)];
+
                 Promise.all(layers).then(result => {
-                    this.layers = result;
-                    result.map(item => {
+                    result.forEach(item => {
+                        that.layers = that.layers.concat(item);
+                    });
+
+                    that.layers.forEach(item => {
                         if (item && item.addTo) {
-                            item.addTo(this.map);
+                            item.addTo(that.map);
                         }
                     })
                 });
@@ -187,7 +192,6 @@
                         });
                         const style = {
                             style: function(feature) {
-                                console.info(feature);
                                 return {
                                 color: '#cecece', //店铺边框色彩
                                 fill: true,
@@ -195,7 +199,7 @@
                                 fillOpacity: 0.9
                             }}
                         };
-                        return L.geoJSON(feature, style);
+                        return [L.geoJSON(feature, style)];
                     } else {
                         return null
                     }
@@ -225,7 +229,7 @@
                                 color: '#fff'//线路色彩
                             }
                         };
-                        return L.geoJSON(feature, style);
+                        return [L.geoJSON(feature, style)];
                     } else {
                         return null
                     }
@@ -235,6 +239,7 @@
                 })
             },
             loadPoi: function (floorId) {
+                var that = this;
                 return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
                         const feature = res.data.map(it => {
@@ -250,16 +255,37 @@
                                 geometry: geom
                             }
                         });
-                        const style = {
+
+                        var layer1 = L.geoJSON(feature, {
                             style: {
                                 radius: 2,
                                 color: '#000',
                                 fill: true,
                                 fillColor: '#000',
-                                fillOpacity: 0.2
+                                fillOpacity: 1
+                            },
+                            pointToLayer: function (feature, latlng) {
+                                var circleMarker = L.circleMarker(latlng);
+                                circleMarker.on('click', function (e) {
+                                    that.$bus.$emit(events.SELECTPOI, e.target.feature);
+                                });
+                                return circleMarker;
                             }
-                        };
-                        return L.geoJSON(feature, style);
+                        });
+
+                        var layer2 = L.geoJSON(feature, {
+                            pointToLayer: function (feature, latlng) {
+                                const myIcon = L.divIcon({
+                                    html: feature.properties.name,
+                                    className: 'div-icon',
+                                    iconSize: [50, 20],
+                                    iconAnchor: [25, -5],
+                                });
+                                return L.marker(latlng, {icon: myIcon});
+                            }
+                        });
+
+                        return [layer2, layer1]
                     } else {
                         return null
                     }
