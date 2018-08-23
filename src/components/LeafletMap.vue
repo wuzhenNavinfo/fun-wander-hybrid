@@ -1,5 +1,6 @@
 <template>
     <div id="leafletMap" class="map-container">
+        <app-header></app-header>
         <router-view></router-view>
     </div>
 </template>
@@ -10,10 +11,13 @@
     import util from '../utils/util'
     import 'leaflet/dist/leaflet.css'
     import events from '@/utils/events'
-
+    import appHeader from '@/components/header'
     export default {
         name: 'LeafletMap',
         props: {},
+        components: {
+            appHeader
+        },
         data: function () {
             return {
                 map: null,
@@ -35,8 +39,19 @@
             if (this.$route.path === '/map/point') {
                 this.showBuiding();
                 this.loadFeatures(61010000941002);
+                // 假定这是当前位置;
+                let locationMarker = null;
+                this.map.panTo([34.300590391379714, 108.94400235446722]);
+                locationMarker = L.marker([34.300590391379714, 108.94400235446722]).addTo(this.map);
                 this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
                 this.map.on('click', data => {
+                    // 移动点
+                    const currentLat = data.latlng.lat;
+                    const currentlng = data.latlng.lng;
+                    locationMarker && this.map.removeLayer(locationMarker);
+                    this.map.panTo([currentLat, currentlng]);
+                    locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
+
                     this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
                 });
             }
@@ -118,7 +133,7 @@
                         item.remove();
                     }
                 });
-                const layers = [this.loadPoiFace(floorId), this.loadPoi(floorId), this.loadLink(floorId)];
+                const layers = [this.loadPoiFace(floorId),  this.loadLink(floorId), this.loadPoi(floorId)];
                 Promise.all(layers).then(result => {
                     this.layers = result;
                     result.map(item => {
@@ -235,7 +250,6 @@
         height: 100%;
         position: relative;
     }
-
     .map-container {
         width: 100%;
         height: 100%;
