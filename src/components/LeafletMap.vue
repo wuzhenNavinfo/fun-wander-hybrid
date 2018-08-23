@@ -1,23 +1,8 @@
 <template>
     <div class="container">
-        <div class="header">
-            <div class="title" @click="goBack();">
-                <i class="mintui mintui-back"></i>
-                <span class="name">{{currentBuliding.name}}</span>
-            </div>
-        </div>
-        <div id="leafletMap" class="map-container"></div>
-        <div class="footer">
-            <div class="title" @click="openSelectPanel();">
-                <i class="mintui mintui-search"></i>
-                <span class="name">选择楼层</span>
-            </div>
-            <div class="content" v-show="openSelectPanelFlag">
-                <div v-for="item in flowInfo" @click="selectFloor(item)">
-                    <mt-cell v-if="item.properties.id==selectedFloor.properties.id" icon="success" :title="item.properties.name" :label="item.properties.infor"></mt-cell>
-                    <mt-cell v-if="item.properties.id!=selectedFloor.properties.id" :title="item.properties.name" :label="item.properties.infor"></mt-cell>
-                </div>
-            </div>
+        <app-header></app-header>
+        <div id="leafletMap" class="map-container">
+            <router-view></router-view>
         </div>
     </div>
 </template>
@@ -311,7 +296,8 @@
     .container {
         width: 100%;
         height: 100%;
-        position: relative;
+        display: flex;
+        flex-direction: column;
     }
     .container .header {
         position: absolute;
@@ -344,6 +330,6 @@
     }
     .map-container {
         width: 100%;
-        height: 100%;
+        flex: 1;
     }
 </style>
