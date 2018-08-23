@@ -192,7 +192,6 @@
                         });
                         const style = {
                             style: function(feature) {
-                                console.info(feature);
                                 return {
                                 color: '#cecece', //店铺边框色彩
                                 fill: true,
