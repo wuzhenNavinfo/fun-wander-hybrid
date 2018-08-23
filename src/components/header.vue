@@ -1,5 +1,5 @@
 <template>
-  <mt-header fixed :title="title">
+  <mt-header :title="title">
     <router-link to="/" slot="left">
       <mt-button icon="back">{{$route.query.name}}</mt-button>
     </router-link>
