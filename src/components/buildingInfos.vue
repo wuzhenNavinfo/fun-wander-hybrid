@@ -14,7 +14,6 @@
 </template>
 
 <script>
-  import L from 'leaflet'
   import events from '@/utils/events';
   import ajax from '@/utils/ajax';
   import util from '@/utils/util'
