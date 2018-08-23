@@ -28,8 +28,7 @@ export default {
   },
   methods: {
     toMap: function (item) {
-        console.info(item);
-        this.$router.push({path:'/map' , query: {id: item.building_id, name: item.name}})
+        this.$router.push({path:'/map/info' , query: {id: item.building_id, name: item.name}})
     },
 
     loadBuilding: function(buildingId) {
