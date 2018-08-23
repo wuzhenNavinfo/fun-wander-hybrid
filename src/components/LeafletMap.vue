@@ -28,6 +28,8 @@
     import util from '../utils/util'
     import 'leaflet/dist/leaflet.css'
 
+    var vueObj = null;
+
     export default {
         name: 'LeafletMap',
         props: {},
@@ -42,6 +44,7 @@
           }
         },
         mounted: function() {
+            vueObj = this;
             this.currentBuliding = {
                 name: this.$route.query.name,
                 id: this.$route.query.id
@@ -54,6 +57,9 @@
             },
             openSelectPanel() {  // 打开选择楼层的面板
                 this.openSelectPanelFlag = !this.openSelectPanelFlag;
+            },
+            getMapObj(){//获取加载的地图对象
+                return vueObj.map;
             },
             selectFloor(item) { // 选择楼层
                 this.flowInfo.forEach(item => {
