@@ -1,7 +1,7 @@
 <template>
   <mt-header :title="title">
     <router-link to="/" slot="left">
-      <mt-button icon="back">{{$route.query.name}}</mt-button>
+      <mt-button icon="back"></mt-button>
     </router-link>
   </mt-header>
 </template>
@@ -12,11 +12,14 @@ export default {
   props: {},
   data() {
     return {
-      title: this.$route.path==='/map/info' ? '详情页' : this.$route.path==='/map/point' ? '地图选点': '详情页'
+        title: null
+      // title: this.$route.path==='/map/info' ? '详情页' : this.$route.path==='/map/point' ? '地图选点': '详情页'
     }
   },
   methods: {},
-  mounted() {}
+  mounted() {
+      this.title = this.$route.query.name;
+  }
 }
 </script>
 

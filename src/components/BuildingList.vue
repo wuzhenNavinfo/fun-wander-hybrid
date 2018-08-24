@@ -1,6 +1,8 @@
 <template>
-	<div>
+	<div id="shop" class="BuildingList">
+    <img class="imglogo" src="../assets/logo.png" width="38px" height="38px" >
         <div v-for="item in buildings" @click="toMap(item);">
+          
             <mt-cell :title="item.name" :label="item.address" is-link></mt-cell>
         </div>
 	</div>  	
@@ -19,6 +21,7 @@ export default {
   },
   props: {},
   mounted: function() {
+    name: 'shop';
     const that = this;
     this.loadBuilding().then(data => {
       if (data) {
@@ -52,4 +55,17 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+  .BuildingList{
+      margin:0 0 0 50px;
+    }
+  .imglogo{
+    position: absolute;
+      left: 10px;
+      top:5px; 
+  }
+  /* .imglogo2{
+    position: absolute;
+      left: 10px;
+      top:50px; 
+  } */
 </style>
