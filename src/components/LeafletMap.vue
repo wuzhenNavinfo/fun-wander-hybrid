@@ -35,11 +35,11 @@
             });
 
             if (this.$route.path === '/map/info') {
-                this.showBuiding();
+                this.showBuilding();
             }
             // 如果是从地图选点进入的逻辑代码
             if (this.$route.path === '/map/point') {
-                this.showBuiding();
+                this.showBuilding();
                 this.loadFeatures(61010000941002);
                 // 假定这是当前位置;
                 let locationMarker = null;
@@ -82,7 +82,7 @@
                 }).addTo(this.map)
             },
             // 显示商场轮廓;
-            showBuiding: function () {
+            showBuilding: function () {
                 const tmpId = this.$route.query.id ? this.$route.query.id : 6101000094;
                 if(!tmpId) throw Error('不是一个有效的商场id');
                 this.loadBuilding(tmpId).then(data => {
