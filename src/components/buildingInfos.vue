@@ -8,6 +8,7 @@
             <span v-if="selectedFloor && selectedFloor.properties" class="name">
                 {{selectedFloor.properties.name}}--{{selectedFloor.properties.infor}}
             </span>
+            <mt-button class="right-button" type="danger" size="small" @click.stop="openFloor(0);" >楼 层</mt-button>
         </div>
         <div class="content" v-show="openSelectPanelFlag">
             <div v-for="item in flowInfo" @click="selectFloor(item)">
@@ -24,7 +25,7 @@
                 </div>
                 <div class="right-waper">
                     <mt-button type="primary" size="small">路 线</mt-button>
-                    <mt-button style="margin-left: 10px;" type="danger" size="small" @click="openFloor();" >楼 层</mt-button>
+                    <mt-button style="margin-left: 10px;" type="danger" size="small" @click="openFloor(1);" >楼 层</mt-button>
                 </div>
             </div>
         </div>
@@ -45,14 +46,17 @@
           currentBuliding: {},
           flowInfo: [],
           selectedFloor: null,
-          openSelectPanelFlag: true,
+          openSelectPanelFlag: false,
           selectedPoi: null
       }
     },
     methods: {
-      openFloor() {
-          this.selectedPoi = null;
-          this.openSelectPanelFlag = true;
+      openFloor(flag) {
+          if (flag == 1) {
+              this.selectedPoi = null;
+              this.openSelectPanelFlag = true;
+          }
+          // alert('路由');
       },
       openSelectPanel() { // 打开选择楼层的面板
         this.openSelectPanelFlag = !this.openSelectPanelFlag;
@@ -148,6 +152,12 @@
       background-color: #26a2ff;
       color: #fff;
       font-size: 14px;
+  }
+  .footer .title .right-button {
+      float: right;
+      padding: 1px 20px;
+      height: 22px;
+      line-height: 22px;
   }
 
   .footer .left-image img {
