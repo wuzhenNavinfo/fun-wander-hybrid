@@ -13,6 +13,9 @@
     import 'leaflet/dist/leaflet.css'
     import events from '@/utils/events'
     import appHeader from '@/components/header'
+
+    var vueObj = null;
+
     export default {
         name: 'LeafletMap',
         props: {},
@@ -26,13 +29,12 @@
             }
         },
         mounted: function () {
+            vueObj = this;
             // 创建地图;
             this.createMap();
-
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
-
             if (this.$route.path === '/map/info') {
                 this.showBuiding();
             }
@@ -52,7 +54,6 @@
                     locationMarker && this.map.removeLayer(locationMarker);
                     this.map.panTo([currentLat, currentlng]);
                     locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
-
                     this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
                 });
             }
@@ -69,7 +70,6 @@
                     zoomControl: false,
                     attributionControl: false
                 }).setView([34.300590391379714, 108.94400235446722], 17)
-
                 // 腾讯底图
                 L.tileLayer('http://{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0', {
                     // attribution: 'test',
@@ -79,6 +79,9 @@
                     subdomains: ['rt0', 'rt1', 'rt2', 'rt3'],
                     tms: true
                 }).addTo(this.map)
+            },
+            getMapObj: function() {
+                return vueObj.map;
             },
             // 显示商场轮廓;
             showBuiding: function () {
@@ -127,7 +130,6 @@
                     return null
                 })
             },
-
             loadFeatures: function (floorId) {
                 this.layers.forEach(item => {
                     if (item) {
@@ -150,7 +152,6 @@
                     })
                 });
             },
-
             loadPoiFace: function (floorId) {
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
