@@ -29,7 +29,6 @@
             }
         },
         mounted: function () {
-            vueObj = this;
             // 创建地图;
             this.createMap();
             this.$bus.$on(events.FLOORCHANGING, data => {
