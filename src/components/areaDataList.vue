@@ -1,7 +1,7 @@
 <template>
   <div class="areaDataList">
-    <div v-for="item in areaList" @click.stop="selectPoint(item)">
-      <mt-cell :title="item" :label="item">
+    <div v-for="item in areaList" :key="item.id" @click.stop="selectPoint(item)">
+      <mt-cell :title="item.properties.name" :label="item.properties.name">
         <mt-button type="primary" size="small">设为终点</mt-button>
       </mt-cell>
     </div>

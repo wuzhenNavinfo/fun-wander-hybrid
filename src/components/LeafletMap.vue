@@ -8,11 +8,20 @@
 
 <script>
     import L from 'leaflet'
+    import icon from 'leaflet/dist/images/marker-icon.png';
+    import iconShadow from 'leaflet/dist/images/marker-shadow.png';
     import ajax from '../utils/ajax'
     import util from '../utils/util'
     import 'leaflet/dist/leaflet.css'
     import events from '@/utils/events'
     import appHeader from '@/components/header'
+
+    // 解决leaflet默认marker图标打包后错误的问题;
+    let DefaultIcon = L.icon({
+          iconUrl: icon,
+          shadowUrl: iconShadow
+      });
+    L.Marker.prototype.options.icon = DefaultIcon;
 
     var vueObj = null;
 
@@ -44,17 +53,25 @@
                 this.loadFeatures(61010000941002);
                 // 假定这是当前位置;
                 let locationMarker = null;
-                this.map.panTo([34.300590391379714, 108.94400235446722]);
-                locationMarker = L.marker([34.300590391379714, 108.94400235446722]).addTo(this.map);
-                this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
+                this.map.panTo([34.29219622474704, 108.94794523715974]);
+                locationMarker = L.marker([34.29219622474704, 108.94794523715974],{
+                        bounceOnAdd: true,
+                        bounceOnAddOptions: {duration: 500, height: 100, loop: 2},
+                        bounceOnAddCallback: function() {console.log("done");}
+                    }).addTo(this.map);
+                this.loadAreaPoints(61010000941002).then(res => {
+                    const start = Math.floor(Math.random() * (res.length - 4));
+                    this.$bus.$emit(events.GETNEARPOINTS, res.slice(start, start + 4));
+                });
                 this.map.on('click', data => {
-                    // 移动点
-                    const currentLat = data.latlng.lat;
-                    const currentlng = data.latlng.lng;
-                    locationMarker && this.map.removeLayer(locationMarker);
-                    this.map.panTo([currentLat, currentlng]);
-                    locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
-                    this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
+                    this.loadAreaPoints(61010000941002).then(res => {
+                        // 移动点
+                        locationMarker && this.map.removeLayer(locationMarker);
+                        this.map.panTo(data.latlng);
+                        locationMarker = L.marker(data.latlng).addTo(this.map);
+                        const start = Math.floor(Math.random() * (res.length - 4));
+                        this.$bus.$emit(events.GETNEARPOINTS, res.slice(start, start + 4));
+                    });
                 });
             }
         },
@@ -62,6 +79,28 @@
             this.$bus.$off(events.FLOORCHANGING);
         },
         methods: {
+            loadAreaPoints: function(floorId) {
+                return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
+                    let feature = {};
+                    if (res && res.data && res.data.length > 0) {
+                        feature = res.data.map(it => {
+                            const geom = util.wktToGeojson(it.geometry)
+                            return {
+                                type: 'Feature',
+                                properties: {
+                                    id: it.poi_id,
+                                    kind: it.kind,
+                                    name: it.name,
+                                    faceId: it.face_id,
+                                },
+                                geometry: geom
+                            }
+                        });
+
+                    }
+                    return feature;
+                });
+            },
             // 加载腾讯地图;
             createMap: function () {
                 this.map = L.map('leafletMap', {
