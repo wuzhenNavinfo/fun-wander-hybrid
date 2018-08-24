@@ -4,5 +4,6 @@
 
 export default {
   GETNEARPOINTS: 'getNearPoints',
-  FLOORCHANGING: 'floorChanging'
+  FLOORCHANGING: 'floorChanging',
+  SELECTPOI: 'selectPoi'
 }

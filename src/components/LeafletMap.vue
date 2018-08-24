@@ -1,9 +1,8 @@
 <template>
     <div class="container">
         <app-header></app-header>
-        <div id="leafletMap" class="map-container">
-            <router-view></router-view>
-        </div>
+        <div id="leafletMap" class="map-container"></div>
+        <router-view></router-view>
     </div>
 </template>
 
@@ -15,7 +14,7 @@
     import events from '@/utils/events'
     import appHeader from '@/components/header'
 
-    var vueObj = null;
+    L.Icon.Default.prototype.options.imagePath = '/res/leaflet/images/'
 
     export default {
         name: 'LeafletMap',
@@ -30,18 +29,17 @@
             }
         },
         mounted: function () {
-            vueObj = this;
             // 创建地图;
             this.createMap();
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
             if (this.$route.path === '/map/info') {
-                this.showBuiding();
+                this.showBuilding();
             }
             // 如果是从地图选点进入的逻辑代码
             if (this.$route.path === '/map/point') {
-                this.showBuiding();
+                this.showBuilding();
                 this.loadFeatures(61010000941002);
                 // 假定这是当前位置;
                 let locationMarker = null;
@@ -81,11 +79,8 @@
                     tms: true
                 }).addTo(this.map)
             },
-            getMapObj: function() {
-                return vueObj.map;
-            },
             // 显示商场轮廓;
-            showBuiding: function () {
+            showBuilding: function () {
                 const tmpId = this.$route.query.id ? this.$route.query.id : 6101000094;
                 if(!tmpId) throw Error('不是一个有效的商场id');
                 this.loadBuilding(tmpId).then(data => {
@@ -101,9 +96,9 @@
                     if (res && res.data && res.data.length > 0) {
                         const style = {
                             style: {
-                                color: '#999',
+                                color: '#d1a990',//商城边框色
                                 fill: true,
-                                fillColor: '#666',
+                                fillColor: '#f8c0e3',//商城地面色
                                 fillOpacity: 0.2
                             }
                         };
@@ -137,12 +132,18 @@
                         item.remove();
                     }
                 });
+                this.layers = [];
+                var that = this;
                 const layers = [this.loadPoiFace(floorId),  this.loadLink(floorId), this.loadPoi(floorId)];
+
                 Promise.all(layers).then(result => {
-                    this.layers = result;
-                    result.map(item => {
+                    result.forEach(item => {
+                        that.layers = that.layers.concat(item);
+                    });
+
+                    that.layers.forEach(item => {
                         if (item && item.addTo) {
-                            item.addTo(this.map);
+                            item.addTo(that.map);
                         }
                     })
                 });
@@ -150,6 +151,31 @@
             loadPoiFace: function (floorId) {
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
+                        var colos = {
+                            9203002: '#fd7676',//公共受限区域
+                            9205000: '#ddd',//空置单元
+
+                            1103003: '#befe73',//客梯
+                            1102000: '#befe73',//楼梯
+                            1103001: '#befe73',//扶梯
+                            
+                            1303014: '#f69d70',
+                            1303004: '#d9ceff',
+                            1303020: '#f1d35b',//体育
+                            1303005: '#f69d70',//金
+                            1303015: '#fe9104',//玛斯威顿
+                            1303020: '#c6a5a3',//安踏体育
+                            1303001: '#fb8ec6',//服装
+                            1303002: '#c6a5a3',//鞋
+                            1304000: '#81effe',//保健
+                            1303000: '#f69d70',//商铺
+                            1306004: '#04feef',//中国移动
+                            1303007: '#f1d35b',//手机
+
+                            2707000: '#affed1',//医药超市
+                            2301000: '#d9ceff',//zhiao
+                            1303009: '#f69d70',//酒
+                        };
                         const feature = res.data.map(it => {
                             return {
                                 type: 'Feature',
@@ -162,14 +188,15 @@
                             }
                         });
                         const style = {
-                            style: {
-                                color: '#999',
+                            style: function(feature) {
+                                return {
+                                color: '#cecece', //店铺边框色彩
                                 fill: true,
-                                fillColor: '#666',
-                                fillOpacity: 0.2
-                            }
+                                fillColor: colos[feature.properties.poiKind] ?  colos[feature.properties.poiKind] : '#f1d35b',//店铺内部色彩
+                                fillOpacity: 0.9
+                            }}
                         };
-                        return L.geoJSON(feature, style);
+                        return [L.geoJSON(feature, style)];
                     } else {
                         return null
                     }
@@ -196,10 +223,10 @@
                         });
                         const style = {
                             style: {
-                                color: '#ddd'
+                                color: '#fff'//线路色彩
                             }
                         };
-                        return L.geoJSON(feature, style);
+                        return [L.geoJSON(feature, style)];
                     } else {
                         return null
                     }
@@ -209,6 +236,7 @@
                 })
             },
             loadPoi: function (floorId) {
+                var that = this;
                 return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
                         const feature = res.data.map(it => {
@@ -224,16 +252,37 @@
                                 geometry: geom
                             }
                         });
-                        const style = {
+
+                        var layer1 = L.geoJSON(feature, {
                             style: {
                                 radius: 2,
-                                color: '#999',
+                                color: '#000',
                                 fill: true,
-                                fillColor: '#999',
-                                fillOpacity: 0.2
+                                fillColor: '#000',
+                                fillOpacity: 1
+                            },
+                            pointToLayer: function (feature, latlng) {
+                                var circleMarker = L.circleMarker(latlng);
+                                circleMarker.on('click', function (e) {
+                                    that.$bus.$emit(events.SELECTPOI, e.target.feature);
+                                });
+                                return circleMarker;
                             }
-                        };
-                        return L.geoJSON(feature, style);
+                        });
+
+                        var layer2 = L.geoJSON(feature, {
+                            pointToLayer: function (feature, latlng) {
+                                const myIcon = L.divIcon({
+                                    html: feature.properties.name,
+                                    className: 'div-icon',
+                                    iconSize: [50, 20],
+                                    iconAnchor: [25, -5],
+                                });
+                                return L.marker(latlng, {icon: myIcon});
+                            }
+                        });
+
+                        return [layer2, layer1]
                     } else {
                         return null
                     }
