@@ -16,14 +16,7 @@
     import events from '@/utils/events'
     import appHeader from '@/components/header'
 
-    // 解决leaflet默认marker图标打包后错误的问题;
-    let DefaultIcon = L.icon({
-          iconUrl: icon,
-          shadowUrl: iconShadow
-      });
-    L.Marker.prototype.options.icon = DefaultIcon;
-
-    var vueObj = null;
+    L.Icon.Default.prototype.options.imagePath = '/res/leaflet/images/'
 
     export default {
         name: 'LeafletMap',
@@ -38,7 +31,6 @@
             }
         },
         mounted: function () {
-            vueObj = this;
             // 创建地图;
             this.createMap();
             this.$bus.$on(events.FLOORCHANGING, data => {
@@ -118,9 +110,6 @@
                     subdomains: ['rt0', 'rt1', 'rt2', 'rt3'],
                     tms: true
                 }).addTo(this.map)
-            },
-            getMapObj: function() {
-                return vueObj.map;
             },
             // 显示商场轮廓;
             showBuilding: function () {

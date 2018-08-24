@@ -2,28 +2,41 @@
     <div>
         <div class="searchContainer" v-show="searchContainer">
             <div class="searchPanel">
-                <div><input type="input" v-model="startPlace" placeholder="输入起点" v-on:input="queryPlace('start')"/></div>
-                <div><input type="input" v-model="endPlace" placeholder="输入终点" v-on:input="queryPlace('end')"/></div>
+                <div><input type="input" v-model="startPlace.name" placeholder="输入起点" v-on:input="queryPlace('start')" v-on:click="selectType('start')"/></div>
+                <div><input type="input" v-model="endPlace.name" placeholder="输入终点" v-on:input="queryPlace('end')" v-on:click="selectType('start')"/></div>
             </div>
             <div class="searchType">
                 <span v-on:click="switchMode($event.target, 'name')">名称搜索</span>
                 <span v-on:click="switchMode($event.target, 'search')">地图选点</span>
             </div>
             <div class="resultPanel">
-                <ul>
-                    <li v-for="place in placeList" v-on:click="selectPlace(place)">{{place.name}}</li>
-                </ul>
+                <!-- <ul>
+                    <li v-for="place in placeList" :key="place.poi_id" v-on:click="selectPlace(place)">{{place.name}}</li>
+                </ul> -->
+                <!-- <el-row>
+                    <el-col :span="24" v-for="place in placeList" :key="place.poi_id" v-on:click="selectPlace(place)"><div class="grid-content bg-purple-dark">{{place.name}}</div></el-col>
+                    <elnav></elnav>
+                </el-row> -->
+                <mt-index-list>
+                    <mt-index-section v-for="(place, index) in placeList" :key="index" :index="place.index" >
+                        <mt-cell v-for="p in place.data" :key="p.poi_id" :title="p.name" @click.native="selectPlace(p)">
+                            <!-- <div>{{p.name}}</div> -->
+                        </mt-cell>
+                    </mt-index-section>
+                </mt-index-list>
             </div>
         </div>
-        <div id="leafletMap" class="map-container"></div>
+        <div class="mapContainer" v-show="!searchContainer">
+            <leaflet-map name="LeafletMap" ref="leafletMap"></leaflet-map>
+        </div>
     </div>
-    
 </template>
 
 <script>
     import L from 'leaflet';
     import util from '../utils/util'
     import LeafletMap from './LeafletMap.vue';
+    import appHeader from './header.vue';
     import ajax from '../utils/ajax';
 
     export default {
@@ -33,19 +46,22 @@
             return {
                 placeList: [],
                 searchType: 'start',
-                startPlace: '',
-                endPlace: '',
+                startPlace: {name: ''},
+                endPlace: {name: ''},
                 searchContainer: true
             }
+        },
+        components: {
+            LeafletMap
         },
         mounted: function() {
             this.switchMode(document.querySelectorAll('.searchType span')[0], 'name');
         },
         methods: {
             queryPlace: function(type) {
-                let searchName = this.startPlace;
+                let searchName = this.startPlace.name;
                 if(type === 'end'){
-                    searchName = this.endPlace;
+                    searchName = this.endPlace.name;
                 }
                 if(searchName === '') {
                     this.placeList = [];
@@ -53,31 +69,53 @@
                 }
                 this.searchType = type;
                 var param = {
-                    // buildingId: 6101000094,
-                    buildingId: this.$route.query.id,
+                    buildingId: 6101000094,
+                    // buildingId: this.$route.query.id,
                     tip: searchName
                 };
                 ajax.get(`/indoor/building/search/poi/`, param).then(res => {
                     if(res.data && res.data.length !== 0){
-                        this.placeList = res.data;
+                        var resultObj = {}, resultArr = [];
+                        res.data.forEach(e => {
+                            resultObj[e.name[0]] = resultObj[e.name[0]] || [];
+                            resultObj[e.name[0]].push(e);
+                        })
+                        for(var o in resultObj){
+                            resultArr.push({
+                                index: o,
+                                data: resultObj[o]
+                            })
+                        }
+                        this.placeList = resultArr;
                     }else{
                         this.placeList = [];
                     }
                 })
             },
+            selectType: function(type) {
+                this.searchType = type;
+            },
             selectPlace: function(place) {
                 if(this.searchType === 'start') {
-                    this.startPlace = place.name;
+                    this.startPlace = place;
                 } else {
-                    this.endPlace = place.name;
+                    this.endPlace = place;
                 }
 
-                if(this.startPlace !== '' &&this.endPlace !== '') {
-                    /* ajax.get().then(geo => {
-
-                    }) */
-                    this.$router.push('/map');
-                    this.showPathOnMap();
+                if(this.startPlace.name !== '' && this.endPlace.name !== '') {
+                    var self = this;
+                    var param = {
+                        buildingId: 6101000094,
+                        // sNodeId: this.startPlace.poi_id,
+                        // eNodeId: this.endPlace.poi_id
+                        sNodeId: '61010000941002050177',
+                        eNodeId: '61010000941002050017'
+                    };
+                    ajax.get('indoor/building/link/route', param).then(geo => {
+                        // this.$router.push('/map');
+                        this.searchContainer = false;
+                        this.showPathOnMap(geo.data[0]);
+                    })
                 }
             },
             switchMode: function(domObj, type) {
@@ -86,19 +124,38 @@
                 })
                 domObj.classList.add('select');
             },
-            showPathOnMap: function() {
-                var latlngs = [
+            showPathOnMap: function(data) {
+                let mapObj = this.$refs.leafletMap.map;
+                /* pathGeo = [
                     [40, 114],
                     [43.2, 119],
                     [38.3, 128]
                 ];
-                var lineLaye = new L.Polyline(latlngs, {
-                    color:'#f00',
-                    weight:2
-                });
-                setTimeout(function() {
-                    LeafletMap.methods.getMapObj().addLayer(lineLaye);
-                })
+                var lineLaye = new L.Polyline(pathGeo, {
+                    color: '#f00',
+                    weight: 2
+                }); */
+
+                const feature = {
+                    type: 'Feature',
+                    properties: {
+                        id: data.link_id
+                    },
+                    geometry: util.wktToGeojson(data.geometry)
+                }
+                const style = {
+                    style: {
+                        color: '#f00',
+                        fill: true,
+                        fillColor: '#f00',
+                        strokeColor: '#f00',
+                        fillOpacity: 0.2
+                    }
+                };
+                const path = L.geoJSON(feature, style);
+                path.addTo(mapObj);
+                mapObj.fitBounds(path.getBounds());
+                // this.$refs.leafletMap.map.addLayer(lineLaye);
             }
         }
     };
@@ -166,8 +223,10 @@
         list-style: none;
         padding: 5px 14px;
     }
-    .map-container {
+    .mapContainer {
+        position: absolute;
         width: 100%;
         height: 100%;
+        z-index: 0;
     }
 </style>
