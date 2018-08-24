@@ -13,6 +13,9 @@
     import 'leaflet/dist/leaflet.css'
     import events from '@/utils/events'
     import appHeader from '@/components/header'
+
+    L.Icon.Default.prototype.options.imagePath = '/res/leaflet/images/'
+
     export default {
         name: 'LeafletMap',
         props: {},
