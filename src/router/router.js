@@ -6,6 +6,7 @@ import MapBoxMap from '../components/MapBoxMap.vue';
 import LeafletMap from '../components/LeafletMap.vue';
 import MineMap from '../components/MineMap.vue';
 import BuildingList from '../components/BuildingList.vue';
+import PlaceSearch from '../components/PlaceSearch.vue';
 
 const routes = [
   { path: '/', component: BuildingList },
@@ -22,7 +23,8 @@ const routes = [
     ]
   },
   { path: '/mapbox', component: MapBoxMap },
-  { path: '/minmap', component: MineMap }
+  { path: '/minmap', component: MineMap },
+  { path: '/search', component: PlaceSearch }
 ];
 
 export default new VueRouter({
