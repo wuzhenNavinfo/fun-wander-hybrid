@@ -8,7 +8,7 @@
             <span v-if="selectedFloor && selectedFloor.properties" class="name">
                 {{selectedFloor.properties.name}}--{{selectedFloor.properties.infor}}
             </span>
-            <mt-button class="right-button" type="danger" size="small" @click.stop="openFloor(0);" >楼 层</mt-button>
+            <mt-button class="right-button" type="danger" size="small" @click.stop="pathLine();" >路 线</mt-button>
         </div>
         <div class="content" v-show="openSelectPanelFlag">
             <div v-for="item in flowInfo" @click="selectFloor(item)">
@@ -24,8 +24,8 @@
                     <div v-if="selectedPoi && !selectedPoi.address">地址(空)</div>
                 </div>
                 <div class="right-waper">
-                    <mt-button type="primary" size="small">路 线</mt-button>
-                    <mt-button style="margin-left: 10px;" type="danger" size="small" @click="openFloor(1);" >楼 层</mt-button>
+                    <mt-button type="primary" size="small" @click.stop="pathLine();">路 线</mt-button>
+                    <mt-button style="margin-left: 10px;" type="danger" size="small" @click="openFloor();" >楼 层</mt-button>
                 </div>
             </div>
         </div>
@@ -51,12 +51,12 @@
       }
     },
     methods: {
+      pathLine() {
+        this.$router.push('/search');
+      },
       openFloor(flag) {
-          if (flag == 1) {
-              this.selectedPoi = null;
-              this.openSelectPanelFlag = true;
-          }
-          // alert('路由');
+          this.selectedPoi = null;
+          this.openSelectPanelFlag = true;
       },
       openSelectPanel() { // 打开选择楼层的面板
         this.openSelectPanelFlag = !this.openSelectPanelFlag;
@@ -70,6 +70,7 @@
           item.selected = false;
         });
         this.selectedFloor = item;
+        this.globalData.currentFloorId = item.properties.id;
         this.$bus.$emit(events.FLOORCHANGING, item.properties.id);
       },
 
@@ -118,9 +119,10 @@
     },
     mounted() {
         var that = this;
-      this.loadFloorByBuilding(this.$route.query.id).then(res => {
+      this.loadFloorByBuilding(this.globalData.currentBuilding.id).then(res => {
           this.flowInfo = res;
           this.selectedFloor = res[0];
+          this.globalData.currentFloorId = res[0].properties.id;
           // 默认加载第一层的信息
           this.$bus.$emit(events.FLOORCHANGING, res[0].properties.id);
       });

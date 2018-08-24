@@ -15,19 +15,35 @@ export default {
   props: {},
   data() {
     return {
-      areaList: []
+      areaList: [],
+      temp: true,
     }
   },
   methods: {
-    selectPoint(eData) {
-      console.log(eData);
-    }
+      selectPoint(eData) {
+        console.log(eData);
+      },
+      loadNearPoint() {
+          // 根据当前点位查询poi列表
+          var a1 = ['耐克','阿迪达斯','美津浓','彪马','安踏'];
+          var a2 = ['艾格Etam', '鸿韵莱', 'Only', 'TAHAN', '斯尔丽SIERLI'];
+          if (this.temp) {
+              this.areaList = a1;
+          } else {
+              this.areaList = a2;
+          }
+          this.temp = !this.temp;
+      }
   },
   mounted() {
-    this.$bus.$on(events.GETNEARPOINTS, data => {
-      this.areaList = data;
-    });
-  }
+      this.loadNearPoint();
+      this.$bus.$on(events.GETNEARPOINTS, data => {
+          this.loadNearPoint();
+      });
+  },
+    destroyed() {
+        this.$bus.$off(events.GETNEARPOINTS);
+    },
 }
 </script>
 
