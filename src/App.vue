@@ -25,4 +25,9 @@ export default {
   text-align: center;
   color:#665c59;
 }
+/** 设置选择启终点按钮样式 */
+.start_end_btn {
+  font-size: 10px;
+  border-radius: 15px;
+}
 </style>

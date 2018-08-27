@@ -5,5 +5,6 @@
 export default {
   GETNEARPOINTS: 'getNearPoints',
   FLOORCHANGING: 'floorChanging',
-  SELECTPOI: 'selectPoi'
+  SELECTPOI: 'selectPoi',
+  SELECTSTARTANDEND: 'selectStartAndEnd'
 }

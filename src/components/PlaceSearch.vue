@@ -135,7 +135,8 @@
                 })
                 domObj.classList.add('select');
                 if(type === 'search'){
-                    this.$router.push('/map/point' + '?id=' + 6101000094 + '&type=' + this.searchType);
+                    // this.$router.push('/main/point' + '?id=' + 6101000094 + '&type=' + this.searchType);
+                    this.$router.push(`/main/point?id=6101000094&type=${this.searchType}&name=${this.$route.query.name}`);
                 }
             },
             showPathOnMap: function(data) {

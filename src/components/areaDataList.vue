@@ -1,8 +1,8 @@
 <template>
   <div class="areaDataList">
-    <div v-for="item in areaList" @click.stop="selectPoint(item)">
-      <mt-cell :title="item" :label="item">
-        <mt-button type="primary" size="small">设为终点</mt-button>
+    <div v-for="item in areaList" :key="item.id" @click.stop="selectList(item)">
+      <mt-cell :title="item.properties.name" :label="`${$route.query.name}--${item.properties.name}`">
+        <mt-button type="primary" class="start_end_btn" size="small" @click.stop="selectPoint(item)">{{pointType}}</mt-button>
       </mt-cell>
     </div>
   </div>
@@ -19,31 +19,32 @@ export default {
       temp: true,
     }
   },
-  methods: {
-      selectPoint(eData) {
-        console.log(eData);
-      },
-      loadNearPoint() {
-          // 根据当前点位查询poi列表
-          var a1 = ['耐克','阿迪达斯','美津浓','彪马','安踏'];
-          var a2 = ['艾格Etam', '鸿韵莱', 'Only', 'TAHAN', '斯尔丽SIERLI'];
-          if (this.temp) {
-              this.areaList = a1;
-          } else {
-              this.areaList = a2;
-          }
-          this.temp = !this.temp;
+  computed: {
+    pointType: function() {
+      if (this.$route.query.type) {
+        return this.$route.query.type === 'start' ? '设为起点' : '设为终点';
       }
+      return '设为起点';
+    }
   },
-  mounted() {
-      this.loadNearPoint();
-      this.$bus.$on(events.GETNEARPOINTS, data => {
-          this.loadNearPoint();
-      });
-  },
-    destroyed() {
-        this.$bus.$off(events.GETNEARPOINTS);
+  methods: {
+    selectList(eData) {
+      this.$bus.emit(events.SELECTSTARTANDEND, eData.geometry);
     },
+    selectPoint(eData) {
+      // 通过跳转路由来实现;
+    }
+  },
+
+  mounted() {
+    this.$bus.on(events.GETNEARPOINTS, data => {
+      this.areaList = data;
+    });
+  },
+
+  destroyed() {
+    this.$bus.$off(events.GETNEARPOINTS);
+  }
 }
 </script>
 
@@ -53,9 +54,12 @@ export default {
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 200px;
+    max-height: 200px;
     z-index: 1000;
     background: #fff;
     overflow: auto;
+  }
+  .areaDataList > div {
+    border-bottom: 1px solid #eee;
   }
 </style>
