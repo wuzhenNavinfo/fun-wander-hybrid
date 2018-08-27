@@ -40,17 +40,17 @@
 //                this.showBuilding(newVal.id);
 //            }
             // 判断路由应放在监听函数里,因为mounted只会加载一次;
-            $route(to, from) {
-                if (to.path === '/main/info') {
-                    this.showBuilding();
-                } else if (to.path === '/main/point') {
-                    this.handleSelectpointOnMap();
-                } else {
-                    if (this.map.hasLayer(this.selectLoactionMarker)) {
-                        this.map.removeLayer(this.selectLoactionMarker);
-                    }
-                }
-            }
+//            $route(to, from) {
+//                if (to.path === '/main/info') {
+//                    this.showBuilding();
+//                } else if (to.path === '/main/point') {
+//                    this.handleSelectpointOnMap();
+//                } else {
+//                    if (this.map.hasLayer(this.selectLoactionMarker)) {
+//                        this.map.removeLayer(this.selectLoactionMarker);
+//                    }
+//                }
+//            }
         },
         mounted: function () {
             // 创建地图;
@@ -60,6 +60,38 @@
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
+
+            this.$bus.$on(events.MAPCLEAR, () => {
+                if (this.selectedPoiFace) {
+                    this.selectedPoiFace.remove();
+                }
+                if (this.locationMarker) {
+                    this.locationMarker.remove();
+                }
+            })
+
+//            if (this.$route.path === '/map/info') {
+//                this.showBuilding();
+//            }
+//            // 如果是从地图选点进入的逻辑代码
+//            if (this.$route.path === '/main/point') {
+//                this.showBuilding();
+//                this.loadFeatures(61010000941002);
+//                // 假定这是当前位置;
+//                let locationMarker = null;
+//                this.map.panTo([34.300590391379714, 108.94400235446722]);
+//                locationMarker = L.marker([34.300590391379714, 108.94400235446722]).addTo(this.map);
+//                this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
+//                this.map.on('click', data => {
+//                    // 移动点
+//                    const currentLat = data.latlng.lat;
+//                    const currentlng = data.latlng.lng;
+//                    locationMarker && this.map.removeLayer(locationMarker);
+//                    this.map.panTo([currentLat, currentlng]);
+//                    locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
+//                    this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
+//                });
+//            }
             
             if (this.$route.path === '/main/info') {
                 this.showBuilding();
@@ -69,9 +101,19 @@
         },
         destroyed() {
             this.$bus.$off(events.FLOORCHANGING);
+            this.$bus.$on(events.MAPCLEAR);
         },
 
         methods: {
+            mapClick: function (event) {
+                this.$bus.$emit(events.MAPCLICK, event);
+                if (this.selectedPoiFace) {
+                    this.selectedPoiFace.remove();
+                }
+                if (this.locationMarker) {
+                    this.locationMarker.remove();
+                }
+            },
             // 处理地图上点选起始点的逻辑
             handleSelectpointOnMap: function () {
                 this.showBuilding();
@@ -159,6 +201,10 @@
                     zoomControl: false,
                     attributionControl: false
                 }).setView([34.300590391379714, 108.94400235446722], 17)
+                // var that = this;
+//                this.map.on('click', e => {
+//
+//                });
                 // 腾讯底图
                 L.tileLayer('http://{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0', {
                     // attribution: 'test',
@@ -212,7 +258,7 @@
                         return null
                     }
                 }).catch(err => {
-                    console.error(err)
+                    console.error(err);
                     return null
                 })
             },
@@ -356,6 +402,7 @@
                             pointToLayer: function (feature, latlng) {
                                 var circleMarker = L.circleMarker(latlng);
                                 circleMarker.on('click', function (e) {
+                                    that.map.off('click');
                                     const latlng = [e.latlng.lat, e.latlng.lng];
                                     that.locationMarker && that.map.removeLayer(that.locationMarker);
                                     that.map.panTo(latlng);
@@ -364,7 +411,14 @@
 
                                     that.$bus.$emit(events.SELECTPOI, e.target.feature);
 
-                                    that.drawFace(e.target.feature.properties.id);
+                                    that.drawFaceBorder(e.target.feature.properties.id);
+
+                                    setTimeout(function () { // 解决 marker事件和地图事件重复执行的问题
+                                        that.map.on('click', function (event) {
+                                            console.info('click');
+                                            that.mapClick(event);
+                                        });
+                                    }, 100)
                                 });
                                 return circleMarker;
                             }
@@ -391,7 +445,7 @@
                     return null
                 })
             },
-            drawFace(poiId) {
+            drawFaceBorder(poiId) {
                 var face;
                 for (let i = 0, len = this.poiFaces.length; i < len; i++) {
                     if (this.poiFaces[i].properties.poiId === poiId) {
@@ -399,14 +453,12 @@
                         break;
                     }
                 }
-                // face.geometry = util.wktToGeojson(face.geometry);
                 const style = {
                     style: function(feature) {
                         return {
-                            color: 'red', //店铺边框色彩
-                            fill: true,
-                            // fillColor: 'red', //店铺内部色彩
-                            fillOpacity: 0.9
+                            color: '#26a2ff', //店铺边框色彩
+                            fill: false,
+                            fillOpacity: 0.5
                         }}
                 };
                 var layer = L.geoJSON([face], style);
