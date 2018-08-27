@@ -14,6 +14,8 @@ Vue.use(vueBus)
 
 Vue.use(VueRouter)
 
+Vue.prototype.globalData = {};// 用于存储全局变量
+
 new Vue({
     render: h => h(App)
 }).$mount('#app')

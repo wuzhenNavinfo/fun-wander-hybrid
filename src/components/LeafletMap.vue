@@ -1,8 +1,6 @@
 <template>
     <div class="container">
-        <app-header></app-header>
         <div id="leafletMap" class="map-container"></div>
-        <router-view></router-view>
     </div>
 </template>
 
@@ -20,75 +18,91 @@
 
     export default {
         name: 'LeafletMap',
-        props: {},
+        props: {
+            'buildingInfo': Object
+        },
         components: {
-            appHeader
         },
         data: function () {
             return {
+                building: null,
                 map: null,
-                layers: []
+                layers: [],
+                locationMarker: null,
+                poiFaces: [],
+                selectedPoiFace: null
+            }
+        },
+        watch: {
+//            buildingInfo: function (newVal, oldVal) {
+//                this.building = newVal;
+//                this.showBuilding(newVal.id);
+//            }
+            // 判断路由应放在监听函数里,因为mounted只会加载一次;
+            $route(to, from) {
+                if (to.path === '/main/info') {
+                    this.showBuilding();
+                } else if (to.path === '/main/point') {
+                    this.showBuilding();
+                    this.loadFeatures(61010000941002);
+                    // 假定这是当前位置;
+                    let radius = 15; // 搜索半径;
+                    let pixToContainer = null;
+                    let currentLocation = [34.29231145532328, 108.94801229238512];
+                    let locationMarker = L.marker(currentLocation).addTo(this.map);
+                    let isReady = false;
+
+
+                    // 将地图中心设置为当前点;
+                    this.map.setView(currentLocation, 20);
+
+                    this.loadAreaLists(radius, currentLocation).then(result => {
+                        this.$bus.emit(events.GETNEARPOINTS, result);
+                    })
+
+                    setTimeout(() => {
+                        pixToContainer = this.map.latLngToContainerPoint(currentLocation);
+                        isReady = true;
+                    }, 300);
+
+                    // 监听地图移动事件;
+                    this.map.on('move', data => {
+                        // 移动点
+                        if (!isReady) return;
+                        currentLocation = this.map.containerPointToLatLng(pixToContainer);
+                        locationMarker.setLatLng(currentLocation);
+                        // 可以做一些对marker的动画处理;
+                        // console.log(locationMarker)
+                    });
+                    
+                    // 当地图拖动结束来触发查询事件;
+                    this.map.on('dragend', data => {
+                        this.loadAreaLists(radius, currentLocation).then(result => {
+                            this.$bus.$emit(events.GETNEARPOINTS, result);
+                        })
+                    });
+
+                    // 监听来自areaList的列表点选事件;
+                    this.$bus.on(events.SELECTSTARTANDEND, data => {
+                        this.map.panTo(data.coordinates);
+                        locationMarker.setLatLng(data.coordinates);
+                    });
+                }
             }
         },
         mounted: function () {
             // 创建地图;
             this.createMap();
+            this.showBuilding(this.globalData.currentBuilding.id);
+
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
-            if (this.$route.path === '/map/info') {
-                this.showBuilding();
-            }
-            // 如果是从地图选点进入的逻辑代码
-            if (this.$route.path === '/map/point') {
-                this.showBuilding();
-                this.loadFeatures(61010000941002);
-                // 假定这是当前位置;
-                let radius = 15; // 搜索半径;
-                let pixToContainer = null;
-                let currentLocation = [34.29231145532328, 108.94801229238512];
-                let locationMarker = L.marker(currentLocation).addTo(this.map);
-                let isReady = false;
-
-
-                // 将地图中心设置为当前点;
-                this.map.setView(currentLocation, 20);
-
-                this.loadAreaLists(radius, currentLocation).then(result => {
-                    this.$bus.emit(events.GETNEARPOINTS, result);
-                })
-
-                setTimeout(() => {
-                    pixToContainer = this.map.latLngToContainerPoint(currentLocation);
-                    isReady = true;
-                }, 300);
-
-                // 监听地图移动事件;
-                this.map.on('move', data => {
-                    // 移动点
-                    if (!isReady) return;
-                    currentLocation = this.map.containerPointToLatLng(pixToContainer);
-                    locationMarker.setLatLng(currentLocation);
-                    // console.log(locationMarker)
-                });
-                
-                // 当地图拖动结束来触发查询事件;
-                this.map.on('dragend', data => {
-                    this.loadAreaLists(radius, currentLocation).then(result => {
-                        this.$bus.$emit(events.GETNEARPOINTS, result);
-                    })
-                });
-
-                // 监听来自areaList的列表点选事件;
-                this.$bus.on(events.SELECTSTARTANDEND, data => {
-                    this.map.panTo(data.coordinates);
-                    locationMarker.setLatLng(data.coordinates);
-                })
-            }
         },
         destroyed() {
             this.$bus.$off(events.FLOORCHANGING);
         },
+
         methods: {
             loadAreaLists: function(radius, currentLocation) {
                 return this.loadAreaPoints(61010000941002).then(res => {
@@ -141,8 +155,8 @@
                 }).addTo(this.map)
             },
             // 显示商场轮廓;
-            showBuilding: function () {
-                const tmpId = this.$route.query.id ? this.$route.query.id : 6101000094;
+            showBuilding: function (tmpId) {
+                tmpId = tmpId ? tmpId : '6101000094';
                 if(!tmpId) throw Error('不是一个有效的商场id');
                 this.loadBuilding(tmpId).then(data => {
                     if (data) {
@@ -210,6 +224,7 @@
                 });
             },
             loadPoiFace: function (floorId) {
+                var that = this;
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
                         var colos = {
@@ -248,6 +263,7 @@
                                 geometry: util.wktToGeojson(it.geometry)
                             }
                         });
+                        that.poiFaces = feature;
                         const style = {
                             style: function(feature) {
                                 return {
@@ -325,7 +341,15 @@
                             pointToLayer: function (feature, latlng) {
                                 var circleMarker = L.circleMarker(latlng);
                                 circleMarker.on('click', function (e) {
+                                    const latlng = [e.latlng.lat, e.latlng.lng];
+                                    that.locationMarker && that.map.removeLayer(that.locationMarker);
+                                    that.map.panTo(latlng);
+                                    that.locationMarker = L.marker(latlng).addTo(that.map);
+                                    that.$bus.$emit(events.GETNEARPOINTS);
+
                                     that.$bus.$emit(events.SELECTPOI, e.target.feature);
+
+                                    that.drawFace(e.target.feature.properties.id);
                                 });
                                 return circleMarker;
                             }
@@ -351,6 +375,31 @@
                     console.error(err)
                     return null
                 })
+            },
+            drawFace(poiId) {
+                var face;
+                for (let i = 0, len = this.poiFaces.length; i < len; i++) {
+                    if (this.poiFaces[i].properties.poiId === poiId) {
+                        face = this.poiFaces[i];
+                        break;
+                    }
+                }
+                // face.geometry = util.wktToGeojson(face.geometry);
+                const style = {
+                    style: function(feature) {
+                        return {
+                            color: 'red', //店铺边框色彩
+                            fill: true,
+                            // fillColor: 'red', //店铺内部色彩
+                            fillOpacity: 0.9
+                        }}
+                };
+                var layer = L.geoJSON([face], style);
+                if (this.selectedPoiFace) {
+                    this.selectedPoiFace.remove();
+                }
+                this.selectedPoiFace = layer;
+                layer.addTo(this.map)
             }
         }
     };

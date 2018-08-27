@@ -31,7 +31,11 @@ export default {
   },
   methods: {
     toMap: function (item) {
-        this.$router.push({path:'/map/info' , query: {id: item.building_id, name: item.name}})
+        this.$router.push({path:'/main/info' , query: {id: item.building_id, name: item.name}})
+        this.globalData.currentBuilding = {
+            id: item.building_id,
+            name: item.name
+        };
     },
 
     loadBuilding: function(buildingId) {

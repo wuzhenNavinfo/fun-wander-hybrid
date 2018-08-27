@@ -15,7 +15,8 @@ export default {
   props: {},
   data() {
     return {
-      areaList: []
+      areaList: [],
+      temp: true,
     }
   },
   computed: {
@@ -34,13 +35,15 @@ export default {
       // 通过跳转路由来实现;
     }
   },
+  
   mounted() {
     this.$bus.on(events.GETNEARPOINTS, data => {
       this.areaList = data;
     });
   },
+
   destroyed() {
-    this.$bus.off(events.GETNEARPOINTS);
+    this.$bus.$off(events.GETNEARPOINTS);
   }
 }
 </script>

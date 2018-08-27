@@ -20,7 +20,6 @@
                 <mt-index-list>
                     <mt-index-section v-for="(place, index) in placeList" :key="index" :index="place.index" >
                         <mt-cell v-for="p in place.data" :key="p.poi_id" :title="p.name" @click.native="selectPlace(p)">
-                            <!-- <div>{{p.name}}</div> -->
                         </mt-cell>
                     </mt-index-section>
                 </mt-index-list>
@@ -101,61 +100,72 @@
                 } else {
                     this.endPlace = place;
                 }
+                ajax.get('/indoor/building/poi/' + place.poi_id).then(poi => {
+                    if(this.searchType === 'start'){
+                        this.startPlace.nodeId = poi.data[0].node_id;
+                    }else{
+                        this.endPlace.nodeId = poi.data[0].node_id;
+                    }
+                    
 
-                if(this.startPlace.name !== '' && this.endPlace.name !== '') {
-                    var self = this;
-                    var param = {
-                        buildingId: 6101000094,
-                        // sNodeId: this.startPlace.poi_id,
-                        // eNodeId: this.endPlace.poi_id
-                        sNodeId: '61010000941002050177',
-                        eNodeId: '61010000941002050017'
-                    };
-                    ajax.get('indoor/building/link/route', param).then(geo => {
-                        // this.$router.push('/map');
-                        this.searchContainer = false;
-                        this.showPathOnMap(geo.data[0]);
-                    })
-                }
+                    if(this.startPlace.name !== '' && this.endPlace.name !== '') {
+                        var self = this;
+                        var param = {
+                            buildingId: 6101000094,
+                            sNodeId: this.startPlace.nodeId,
+                            eNodeId: this.endPlace.nodeId
+                            // sNodeId: '61010000941002050177',
+                            // eNodeId: '61010000941002050017'
+                        };
+                        ajax.get('indoor/building/link/route', param).then(geo => {
+                            // this.$router.push('/map');
+                            this.searchContainer = false;
+                            this.showPathOnMap(geo.data);
+                            var self = this;
+                            setTimeout(function(){
+                                self.$refs.leafletMap.map.invalidateSize(true);
+                            },10)
+                        })
+                    }
+                })
             },
             switchMode: function(domObj, type) {
                 document.querySelectorAll('.searchType span').forEach(d => {
                     d.classList.remove('select');
                 })
                 domObj.classList.add('select');
+                if(type === 'search'){
+                    this.$router.push('/map/point' + '?id=' + 6101000094 + '&type=' + this.searchType);
+                }
             },
             showPathOnMap: function(data) {
                 let mapObj = this.$refs.leafletMap.map;
-                /* pathGeo = [
-                    [40, 114],
-                    [43.2, 119],
-                    [38.3, 128]
-                ];
-                var lineLaye = new L.Polyline(pathGeo, {
-                    color: '#f00',
-                    weight: 2
-                }); */
-
-                const feature = {
-                    type: 'Feature',
-                    properties: {
-                        id: data.link_id
-                    },
-                    geometry: util.wktToGeojson(data.geometry)
-                }
-                const style = {
-                    style: {
-                        color: '#f00',
-                        fill: true,
-                        fillColor: '#f00',
-                        strokeColor: '#f00',
-                        fillOpacity: 0.2
+                data.forEach(line => {
+                    let geoJson = util.wktToGeojson(line.geometry);
+                    const feature = {
+                        type: 'Feature',
+                        properties: {
+                            id: line.link_id
+                        },
+                        geometry: geoJson
                     }
-                };
-                const path = L.geoJSON(feature, style);
-                path.addTo(mapObj);
-                mapObj.fitBounds(path.getBounds());
-                // this.$refs.leafletMap.map.addLayer(lineLaye);
+                    const style = {
+                        style: {
+                            color: '#f00',
+                            fill: true,
+                            fillColor: '#f00',
+                            strokeColor: '#f00',
+                            fillOpacity: 0.2
+                        }
+                    };
+                    const path = L.geoJSON(feature, style);
+                    path.addTo(mapObj);
+                })
+                /* mapObj.fitBounds(path.getBounds());
+                let startPoint = geoJson.coordinates[0].reverse(), 
+                    endPoint = geoJson.coordinates[geoJson.coordinates.length-1].reverse();
+                var popup = L.popup().setLatLng(startPoint).setContent('<p>起点</p>').openOn(mapObj);
+                var popup = L.popup().setLatLng(endPoint).setContent('<p>终点</p>').openOn(mapObj); */
             }
         }
     };
@@ -167,8 +177,9 @@
         height: 100%;
         padding-top: 0.3em;
         font-size: 1em;
-        background-color: #eee;
+        background-color: #26a2ff26;
         box-sizing: border-box;
+        position: absolute;
     }
     .searchContainer ul{
         margin: 0px;
@@ -206,9 +217,8 @@
         border: none;
     }
     .searchContainer .select {
-        background-color: #eee;
-        box-shadow: 0px 2px 5px #999;
-        font-weight: bold;
+        background-color: rgba(38,162,255,0.77);
+        box-shadow: 0px 1px 10px #6cb4ea;
     }
     .searchContainer .resultPanel {
         background-color: white;
@@ -218,6 +228,7 @@
         border-radius: 4px;
         padding: 0.2em;
         cursor: pointer;
+        overflow: scroll;
     }
     .searchContainer .resultPanel ul li {
         list-style: none;
@@ -228,5 +239,6 @@
         width: 100%;
         height: 100%;
         z-index: 0;
+        top:0
     }
 </style>
