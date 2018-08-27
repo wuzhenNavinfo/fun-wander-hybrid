@@ -1,8 +1,6 @@
 <template>
     <div class="container">
-        <app-header></app-header>
         <div id="leafletMap" class="map-container"></div>
-        <router-view></router-view>
     </div>
 </template>
 
@@ -18,44 +16,58 @@
 
     export default {
         name: 'LeafletMap',
-        props: {},
+        props: {
+            'buildingInfo': Object
+        },
         components: {
-            appHeader
         },
         data: function () {
             return {
+                building: null,
                 map: null,
-                layers: []
+                layers: [],
+                locationMarker: null,
+                poiFaces: [],
+                selectedPoiFace: null
             }
+        },
+        watch: {
+//            buildingInfo: function (newVal, oldVal) {
+//                this.building = newVal;
+//                this.showBuilding(newVal.id);
+//            }
         },
         mounted: function () {
             // 创建地图;
             this.createMap();
+            this.showBuilding(this.globalData.currentBuilding.id);
+
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
-            if (this.$route.path === '/map/info') {
-                this.showBuilding();
-            }
-            // 如果是从地图选点进入的逻辑代码
-            if (this.$route.path === '/map/point') {
-                this.showBuilding();
-                this.loadFeatures(61010000941002);
-                // 假定这是当前位置;
-                let locationMarker = null;
-                this.map.panTo([34.300590391379714, 108.94400235446722]);
-                locationMarker = L.marker([34.300590391379714, 108.94400235446722]).addTo(this.map);
-                this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
-                this.map.on('click', data => {
-                    // 移动点
-                    const currentLat = data.latlng.lat;
-                    const currentlng = data.latlng.lng;
-                    locationMarker && this.map.removeLayer(locationMarker);
-                    this.map.panTo([currentLat, currentlng]);
-                    locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
-                    this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
-                });
-            }
+
+//            if (this.$route.path === '/map/info') {
+//                this.showBuilding();
+//            }
+//            // 如果是从地图选点进入的逻辑代码
+//            if (this.$route.path === '/main/point') {
+//                this.showBuilding();
+//                this.loadFeatures(61010000941002);
+//                // 假定这是当前位置;
+//                let locationMarker = null;
+//                this.map.panTo([34.300590391379714, 108.94400235446722]);
+//                locationMarker = L.marker([34.300590391379714, 108.94400235446722]).addTo(this.map);
+//                this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','美津浓','彪马','安踏']);
+//                this.map.on('click', data => {
+//                    // 移动点
+//                    const currentLat = data.latlng.lat;
+//                    const currentlng = data.latlng.lng;
+//                    locationMarker && this.map.removeLayer(locationMarker);
+//                    this.map.panTo([currentLat, currentlng]);
+//                    locationMarker = L.marker([currentLat, currentlng]).addTo(this.map);
+//                    this.$bus.$emit(events.GETNEARPOINTS, ['耐克','阿迪达斯','李宁','联想']);
+//                });
+//            }
         },
         destroyed() {
             this.$bus.$off(events.FLOORCHANGING);
@@ -80,8 +92,8 @@
                 }).addTo(this.map)
             },
             // 显示商场轮廓;
-            showBuilding: function () {
-                const tmpId = this.$route.query.id ? this.$route.query.id : 6101000094;
+            showBuilding: function (tmpId) {
+                tmpId = tmpId ? tmpId : '6101000094';
                 if(!tmpId) throw Error('不是一个有效的商场id');
                 this.loadBuilding(tmpId).then(data => {
                     if (data) {
@@ -149,6 +161,7 @@
                 });
             },
             loadPoiFace: function (floorId) {
+                var that = this;
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
                         var colos = {
@@ -187,6 +200,7 @@
                                 geometry: util.wktToGeojson(it.geometry)
                             }
                         });
+                        that.poiFaces = feature;
                         const style = {
                             style: function(feature) {
                                 return {
@@ -264,7 +278,15 @@
                             pointToLayer: function (feature, latlng) {
                                 var circleMarker = L.circleMarker(latlng);
                                 circleMarker.on('click', function (e) {
+                                    const latlng = [e.latlng.lat, e.latlng.lng];
+                                    that.locationMarker && that.map.removeLayer(that.locationMarker);
+                                    that.map.panTo(latlng);
+                                    that.locationMarker = L.marker(latlng).addTo(that.map);
+                                    that.$bus.$emit(events.GETNEARPOINTS);
+
                                     that.$bus.$emit(events.SELECTPOI, e.target.feature);
+
+                                    that.drawFace(e.target.feature.properties.id);
                                 });
                                 return circleMarker;
                             }
@@ -290,6 +312,31 @@
                     console.error(err)
                     return null
                 })
+            },
+            drawFace(poiId) {
+                var face;
+                for (let i = 0, len = this.poiFaces.length; i < len; i++) {
+                    if (this.poiFaces[i].properties.poiId === poiId) {
+                        face = this.poiFaces[i];
+                        break;
+                    }
+                }
+                // face.geometry = util.wktToGeojson(face.geometry);
+                const style = {
+                    style: function(feature) {
+                        return {
+                            color: 'red', //店铺边框色彩
+                            fill: true,
+                            // fillColor: 'red', //店铺内部色彩
+                            fillOpacity: 0.9
+                        }}
+                };
+                var layer = L.geoJSON([face], style);
+                if (this.selectedPoiFace) {
+                    this.selectedPoiFace.remove();
+                }
+                this.selectedPoiFace = layer;
+                layer.addTo(this.map)
             }
         }
     };

@@ -8,6 +8,7 @@
             <span v-if="selectedFloor && selectedFloor.properties" class="name">
                 {{selectedFloor.properties.name}}--{{selectedFloor.properties.infor}}
             </span>
+            <mt-button class="right-button" type="danger" size="small" @click.stop="pathLine();" >路 线</mt-button>
         </div>
         <div class="content" v-show="openSelectPanelFlag">
             <div v-for="item in flowInfo" @click="selectFloor(item)">
@@ -23,7 +24,7 @@
                     <div v-if="selectedPoi && !selectedPoi.address">地址(空)</div>
                 </div>
                 <div class="right-waper">
-                    <mt-button type="primary" size="small">路 线</mt-button>
+                    <mt-button type="primary" size="small" @click.stop="pathLine();">路 线</mt-button>
                     <mt-button style="margin-left: 10px;" type="danger" size="small" @click="openFloor();" >楼 层</mt-button>
                 </div>
             </div>
@@ -45,12 +46,15 @@
           currentBuliding: {},
           flowInfo: [],
           selectedFloor: null,
-          openSelectPanelFlag: true,
+          openSelectPanelFlag: false,
           selectedPoi: null
       }
     },
     methods: {
-      openFloor() {
+      pathLine() {
+        this.$router.push('/search');
+      },
+      openFloor(flag) {
           this.selectedPoi = null;
           this.openSelectPanelFlag = true;
       },
@@ -66,6 +70,7 @@
           item.selected = false;
         });
         this.selectedFloor = item;
+        this.globalData.currentFloorId = item.properties.id;
         this.$bus.$emit(events.FLOORCHANGING, item.properties.id);
       },
 
@@ -114,9 +119,10 @@
     },
     mounted() {
         var that = this;
-      this.loadFloorByBuilding(this.$route.query.id).then(res => {
+      this.loadFloorByBuilding(this.globalData.currentBuilding.id).then(res => {
           this.flowInfo = res;
           this.selectedFloor = res[0];
+          this.globalData.currentFloorId = res[0].properties.id;
           // 默认加载第一层的信息
           this.$bus.$emit(events.FLOORCHANGING, res[0].properties.id);
       });
@@ -148,6 +154,12 @@
       background-color: #26a2ff;
       color: #fff;
       font-size: 14px;
+  }
+  .footer .title .right-button {
+      float: right;
+      padding: 1px 20px;
+      height: 22px;
+      line-height: 22px;
   }
 
   .footer .left-image img {
