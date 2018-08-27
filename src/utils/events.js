@@ -7,5 +7,6 @@ export default {
   FLOORCHANGING: 'floorChanging',
   SELECTPOI: 'selectPoi',
   MAPCLEAR: 'mapClear',
-  MAPCLICK: 'mapClick'
+  MAPCLICK: 'mapClick',
+  SELECTSTARTANDEND: 'selectStartAndEnd'
 }
