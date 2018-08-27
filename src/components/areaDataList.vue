@@ -21,8 +21,8 @@ export default {
   },
   computed: {
     pointType: function() {
-      if (this.$route.query.selectType) {
-        return this.$route.query.selectType === 'start' ? '设为起点' : '设为终点';
+      if (this.$route.query.type) {
+        return this.$route.query.type === 'start' ? '设为起点' : '设为终点';
       }
       return '设为起点';
     }
@@ -35,7 +35,7 @@ export default {
       // 通过跳转路由来实现;
     }
   },
-  
+
   mounted() {
     this.$bus.on(events.GETNEARPOINTS, data => {
       this.areaList = data;

@@ -29,6 +29,7 @@
                 map: null,
                 layers: [],
                 locationMarker: null,
+                selectLoactionMarker: null,
                 poiFaces: [],
                 selectedPoiFace: null
             }
@@ -43,50 +44,11 @@
                 if (to.path === '/main/info') {
                     this.showBuilding();
                 } else if (to.path === '/main/point') {
-                    this.showBuilding();
-                    this.loadFeatures(61010000941002);
-                    // 假定这是当前位置;
-                    let radius = 15; // 搜索半径;
-                    let pixToContainer = null;
-                    let currentLocation = [34.29231145532328, 108.94801229238512];
-                    let locationMarker = L.marker(currentLocation).addTo(this.map);
-                    let isReady = false;
-
-
-                    // 将地图中心设置为当前点;
-                    this.map.setView(currentLocation, 20);
-
-                    this.loadAreaLists(radius, currentLocation).then(result => {
-                        this.$bus.emit(events.GETNEARPOINTS, result);
-                    })
-
-                    setTimeout(() => {
-                        pixToContainer = this.map.latLngToContainerPoint(currentLocation);
-                        isReady = true;
-                    }, 300);
-
-                    // 监听地图移动事件;
-                    this.map.on('move', data => {
-                        // 移动点
-                        if (!isReady) return;
-                        currentLocation = this.map.containerPointToLatLng(pixToContainer);
-                        locationMarker.setLatLng(currentLocation);
-                        // 可以做一些对marker的动画处理;
-                        // console.log(locationMarker)
-                    });
-                    
-                    // 当地图拖动结束来触发查询事件;
-                    this.map.on('dragend', data => {
-                        this.loadAreaLists(radius, currentLocation).then(result => {
-                            this.$bus.$emit(events.GETNEARPOINTS, result);
-                        })
-                    });
-
-                    // 监听来自areaList的列表点选事件;
-                    this.$bus.on(events.SELECTSTARTANDEND, data => {
-                        this.map.panTo(data.coordinates);
-                        locationMarker.setLatLng(data.coordinates);
-                    });
+                    this.handleSelectpointOnMap();
+                } else {
+                    if (this.map.hasLayer(this.selectLoactionMarker)) {
+                        this.map.removeLayer(this.selectLoactionMarker);
+                    }
                 }
             }
         },
@@ -98,12 +60,65 @@
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
+            
+            if (this.$route.path === '/main/info') {
+                this.showBuilding();
+            } else if (this.$route.path === '/main/point') {
+                this.handleSelectpointOnMap()
+            }
         },
         destroyed() {
             this.$bus.$off(events.FLOORCHANGING);
         },
 
         methods: {
+            // 处理地图上点选起始点的逻辑
+            handleSelectpointOnMap: function () {
+                this.showBuilding();
+                this.loadFeatures(61010000941002);
+                // 假定这是当前位置;
+                let radius = 15; // 搜索半径;
+                let pixToContainer = null;
+                let currentLocation = [34.29231145532328, 108.94801229238512];
+                this.selectLoactionMarker = L.marker(currentLocation).addTo(this.map);
+                let isReady = false;
+
+
+                // 将地图中心设置为当前点;
+                this.map.setView(currentLocation, 20);
+
+                this.loadAreaLists(radius, currentLocation).then(result => {
+                    this.$bus.emit(events.GETNEARPOINTS, result);
+                })
+
+                setTimeout(() => {
+                    pixToContainer = this.map.latLngToContainerPoint(currentLocation);
+                    isReady = true;
+                }, 300);
+
+                // 监听地图移动事件;
+                this.map.on('move', data => {
+                    // 移动点
+                    if (!isReady) return;
+                    currentLocation = this.map.containerPointToLatLng(pixToContainer);
+                    this.selectLoactionMarker.setLatLng(currentLocation);
+                    // 可以做一些对marker的动画处理;
+                    // console.log(this.selectLoactionMarker)
+                });
+                
+                // 当地图拖动结束来触发查询事件;
+                this.map.on('dragend', data => {
+                    this.loadAreaLists(radius, currentLocation).then(result => {
+                        this.$bus.$emit(events.GETNEARPOINTS, result);
+                    })
+                });
+
+                // 监听来自areaList的列表点选事件;
+                this.$bus.on(events.SELECTSTARTANDEND, data => {
+                    this.map.panTo(data.coordinates);
+                    this.selectLoactionMarker.setLatLng(data.coordinates);
+                });
+            },
             loadAreaLists: function(radius, currentLocation) {
                 return this.loadAreaPoints(61010000941002).then(res => {
                     let result = res.map(item => {
