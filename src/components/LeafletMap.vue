@@ -32,10 +32,6 @@
             }
         },
         watch: {
-//            buildingInfo: function (newVal, oldVal) {
-//                this.building = newVal;
-//                this.showBuilding(newVal.id);
-//            }
         },
         mounted: function () {
             // 创建地图;
@@ -45,6 +41,15 @@
             this.$bus.$on(events.FLOORCHANGING, data => {
                 this.loadFeatures(data);
             });
+
+            this.$bus.$on(events.MAPCLEAR, () => {
+                if (this.selectedPoiFace) {
+                    this.selectedPoiFace.remove();
+                }
+                if (this.locationMarker) {
+                    this.locationMarker.remove();
+                }
+            })
 
 //            if (this.$route.path === '/map/info') {
 //                this.showBuilding();
@@ -71,8 +76,18 @@
         },
         destroyed() {
             this.$bus.$off(events.FLOORCHANGING);
+            this.$bus.$on(events.MAPCLEAR);
         },
         methods: {
+            mapClick: function (event) {
+                this.$bus.$emit(events.MAPCLICK, event);
+                if (this.selectedPoiFace) {
+                    this.selectedPoiFace.remove();
+                }
+                if (this.locationMarker) {
+                    this.locationMarker.remove();
+                }
+            },
             // 加载腾讯地图;
             createMap: function () {
                 this.map = L.map('leafletMap', {
@@ -81,6 +96,10 @@
                     zoomControl: false,
                     attributionControl: false
                 }).setView([34.300590391379714, 108.94400235446722], 17)
+                // var that = this;
+//                this.map.on('click', e => {
+//
+//                });
                 // 腾讯底图
                 L.tileLayer('http://{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0', {
                     // attribution: 'test',
@@ -134,7 +153,7 @@
                         return null
                     }
                 }).catch(err => {
-                    console.error(err)
+                    console.error(err);
                     return null
                 })
             },
@@ -278,6 +297,7 @@
                             pointToLayer: function (feature, latlng) {
                                 var circleMarker = L.circleMarker(latlng);
                                 circleMarker.on('click', function (e) {
+                                    that.map.off('click');
                                     const latlng = [e.latlng.lat, e.latlng.lng];
                                     that.locationMarker && that.map.removeLayer(that.locationMarker);
                                     that.map.panTo(latlng);
@@ -287,6 +307,13 @@
                                     that.$bus.$emit(events.SELECTPOI, e.target.feature);
 
                                     that.drawFaceBorder(e.target.feature.properties.id);
+
+                                    setTimeout(function () { // 解决 marker事件和地图事件重复执行的问题
+                                        that.map.on('click', function (event) {
+                                            console.info('click');
+                                            that.mapClick(event);
+                                        });
+                                    }, 100)
                                 });
                                 return circleMarker;
                             }
