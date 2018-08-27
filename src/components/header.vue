@@ -1,5 +1,5 @@
 <template>
-  <mt-header :title="title">
+  <mt-header :title="$route.query.name">
     <router-link to="/" slot="left">
       <mt-button icon="back"></mt-button>
     </router-link>
@@ -11,15 +11,10 @@ export default {
   name: 'appHeader',
   props: {},
   data() {
-    return {
-        title: null
-      // title: this.$route.path==='/map/info' ? '详情页' : this.$route.path==='/map/point' ? '地图选点': '详情页'
-    }
+    return {}
   },
   methods: {},
-  mounted() {
-      this.title = this.$route.query.name;
-  }
+  mounted() {}
 }
 </script>
 
