@@ -286,7 +286,7 @@
 
                                     that.$bus.$emit(events.SELECTPOI, e.target.feature);
 
-                                    that.drawFace(e.target.feature.properties.id);
+                                    that.drawFaceBorder(e.target.feature.properties.id);
                                 });
                                 return circleMarker;
                             }
@@ -313,7 +313,7 @@
                     return null
                 })
             },
-            drawFace(poiId) {
+            drawFaceBorder(poiId) {
                 var face;
                 for (let i = 0, len = this.poiFaces.length; i < len; i++) {
                     if (this.poiFaces[i].properties.poiId === poiId) {
@@ -321,14 +321,12 @@
                         break;
                     }
                 }
-                // face.geometry = util.wktToGeojson(face.geometry);
                 const style = {
                     style: function(feature) {
                         return {
-                            color: 'red', //店铺边框色彩
-                            fill: true,
-                            // fillColor: 'red', //店铺内部色彩
-                            fillOpacity: 0.9
+                            color: '#26a2ff', //店铺边框色彩
+                            fill: false,
+                            fillOpacity: 0.5
                         }}
                 };
                 var layer = L.geoJSON([face], style);
