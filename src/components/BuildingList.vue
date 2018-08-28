@@ -1,8 +1,11 @@
 <template>
+
 	<div id="shop" class="BuildingList">
-    <img class="imglogo" src="../assets/logo.png" width="38px" height="38px" >
+    <img class="imglogo" src="/images/logo.png"  width="45" height="50" >
         <div v-for="item in buildings" @click="toMap(item);">
-          
+
+          <mt-header fixed title="商 场 列 表"></mt-header>
+
             <mt-cell :title="item.name" :label="item.address" is-link></mt-cell>
         </div>
 	</div>  	
@@ -11,6 +14,8 @@
 <script>
 import ajax from '../utils/ajax';
 import util from '../utils/util';
+import { Header } from 'mint-ui';
+
 
 export default {
   name: 'HelloWorld',
@@ -59,13 +64,14 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
   .BuildingList{
-      margin:0 0 0 50px;
+      margin:39px 0 0 60px;
     }
   .imglogo{
     position: absolute;
       left: 10px;
-      top:5px; 
+      top:45px; 
   }
   /* .imglogo2{
     position: absolute;
