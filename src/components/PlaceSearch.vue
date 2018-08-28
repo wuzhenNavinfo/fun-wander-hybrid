@@ -35,7 +35,6 @@
     import L from 'leaflet';
     import util from '../utils/util'
     import LeafletMap from './LeafletMap.vue';
-    import appHeader from './header.vue';
     import ajax from '../utils/ajax';
 
     export default {

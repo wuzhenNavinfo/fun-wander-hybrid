@@ -1,22 +1,26 @@
 <template>
     <div class="container">
-        <app-header></app-header>
-        <leaflet-map></leaflet-map>
-        <router-view></router-view>
+        <mt-header :title="$route.query.name">
+            <router-link to="/" slot="left">
+                <mt-button icon="back"></mt-button>
+            </router-link>
+        </mt-header>
+        <leaflet-map show-center-point='0'></leaflet-map>
+        <building-info></building-info>
     </div>
 </template>
 
 <script>
     import L from 'leaflet'
     import events from '@/utils/events'
-    import appHeader from '@/components/header'
     import leafletMap from './LeafletMap.vue'
+    import buildingInfo from './BuildingInfo.vue'
 
     export default {
-        name: 'Main',
+        name: 'SelectInfo',
         components: {
-            appHeader,
-            leafletMap
+            leafletMap,
+            buildingInfo
         },
         data: function () {
             return {

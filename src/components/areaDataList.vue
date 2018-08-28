@@ -10,6 +10,10 @@
 
 <script>
 import events from '@/utils/events'
+import L from 'leaflet'
+import ajax from '../utils/ajax'
+import util from '../utils/util'
+
 export default {
   name: 'areaDataList',
   props: {},
@@ -28,17 +32,57 @@ export default {
     }
   },
   methods: {
-    selectList(eData) {
-      this.$bus.emit(events.SELECTSTARTANDEND, eData.geometry);
-    },
-    selectPoint(eData) {
-      // 通过跳转路由来实现;
-    }
+      selectList(eData) {
+          this.$bus.emit(events.SELECTSTARTANDEND, eData.geometry);
+      },
+      selectPoint(eData) {
+          // 通过跳转路由来实现;
+      },
+      loadAreaLists(location) {
+          let radius = 15; // 搜索半径;
+          return this.loadAreaPoints(61010000941002).then(res => {
+              let result = res.map(item => {
+                  console.info(item);
+                  const tmpLatLng = L.latLng(...item.geometry.coordinates.reverse());
+                  item.distance = location.distanceTo(tmpLatLng);
+                  return item;
+              });
+              return result.sort((a,b) => a.distance - b.distance).filter(item => item.distance < radius);
+          });
+      },
+      loadAreaPoints: function(floorId) {
+          return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
+              let feature = {};
+              if (res && res.data && res.data.length > 0) {
+                  feature = res.data.map(it => {
+                      const geom = util.wktToGeojson(it.geometry)
+                      return {
+                          type: 'Feature',
+                          properties: {
+                              id: it.poi_id,
+                              kind: it.kind,
+                              name: it.name,
+                              faceId: it.face_id,
+                          },
+                          geometry: geom
+                      }
+                  });
+
+              }
+              return feature;
+          });
+      },
   },
 
   mounted() {
-    this.$bus.on(events.GETNEARPOINTS, data => {
-      this.areaList = data;
+    this.$bus.on(events.GETNEARPOINTS, (data) => {
+
+        if (!data.currentLocation) {
+            return;
+        }
+        this.loadAreaLists(data.currentLocation).then(result => {
+            this.areaList = result;
+        })
     });
   },
 
