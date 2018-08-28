@@ -29,7 +29,7 @@
                 layers: [],
                 locationMarker: null,
                 selectLoactionMarker: null,
-                poiFaces: [],
+                pois: [],
                 selectedPoiFace: null
             }
         },
@@ -154,6 +154,15 @@
                     }
                 });
             },
+            getPoiFeature: function (faceFeature) {
+                var poi = null;
+                for (let i = 0; i < this.pois.length; i++) {
+                    if (this.pois[i].properties.id == faceFeature.properties.poiId) {
+                        poi = this.pois[i];
+                    }
+                }
+                return poi;
+            },
             // 获得商场轮廓图层;
             loadBuilding: function (buildingId) {
                 return ajax.get(`/indoor/building/${buildingId}`).then(res => {
@@ -203,7 +212,7 @@
                 });
                 this.layers = [];
                 var that = this;
-                const layers = [this.loadPoiFace(floorId),  this.loadLink(floorId), this.loadPoi(floorId, flag)];
+                const layers = [this.loadPoiFace(floorId, flag),  this.loadLink(floorId), this.loadPoi(floorId)];
 
                 Promise.all(layers).then(result => {
                     result.forEach(item => {
@@ -215,9 +224,15 @@
                             item.addTo(that.map);
                         }
                     })
+                    that.layers[0].bringToFront(); // 将面放置在最顶层
                 });
             },
-            loadPoiFace: function (floorId) {
+            /**
+             * 地图渲染面
+             * @param floorId 楼层id
+             * @param falg 是否增加poi点击事件的标志 0表示不增加 1表示增加点击事件
+             */
+            loadPoiFace: function (floorId, flag) {
                 var that = this;
                 return ajax.get(`/indoor/building/floor/poiFace/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
@@ -257,15 +272,40 @@
                                 geometry: util.wktToGeojson(it.geometry)
                             }
                         });
-                        that.poiFaces = feature;
                         const style = {
                             style: function(feature) {
                                 return {
                                 color: '#cecece', //店铺边框色彩
                                 fill: true,
                                 fillColor: colos[feature.properties.poiKind] ?  colos[feature.properties.poiKind] : '#f1d35b',//店铺内部色彩
-                                fillOpacity: 0.9
-                            }}
+                                fillOpacity: 0.6
+                            }},
+                            onEachFeature: function (feature, layer) {
+                                if (flag == 1) {
+                                    layer.on('click', function (e) {
+                                        that.map.off('click');
+
+                                        var faecFeature = e.target.feature;
+                                        var poiFeature = that.getPoiFeature(faecFeature);
+                                        if (poiFeature) {
+                                            that.$bus.$emit(events.SELECTPOI, poiFeature);
+                                            that.drawFaceBorder(faecFeature);
+
+                                            const latlng = [poiFeature.geometry.coordinates[1], poiFeature.geometry.coordinates[0]];
+                                            that.map.panTo(latlng);
+                                            that.locationMarker && that.map.removeLayer(that.locationMarker);
+                                            that.locationMarker = L.marker(latlng).addTo(that.map);
+                                        }
+
+
+                                        setTimeout(function () { // 解决 marker事件和地图事件重复执行的问题
+                                            that.map.on('click', function (event) {
+                                                that.mapClick(event);
+                                            });
+                                        }, 100)
+                                    });
+                                }
+                            }
                         };
                         return [L.geoJSON(feature, style)];
                     } else {
@@ -309,9 +349,8 @@
             /**
              * 地图渲染poi以及文字
              * @param floorId 楼层id
-             * @param falg 是否增加poi点击事件的标志 0表示不增加 1表示增加点击事件
              */
-            loadPoi: function (floorId, flag) {
+            loadPoi: function (floorId) {
                 var that = this;
                 return ajax.get(`/indoor/building/floor/poi/${floorId}`).then(res => {
                     if (res && res.data && res.data.length > 0) {
@@ -329,6 +368,8 @@
                             }
                         });
 
+                        that.pois = feature;
+
                         var layer1 = L.geoJSON(feature, {
                             style: {
                                 radius: 2,
@@ -339,27 +380,27 @@
                             },
                             pointToLayer: function (feature, latlng) {
                                 var circleMarker = L.circleMarker(latlng);
-                                if (flag == 1) {
-                                    circleMarker.on('click', function (e) {
-                                        that.map.off('click');
-                                        const latlng = [e.latlng.lat, e.latlng.lng];
-                                        that.locationMarker && that.map.removeLayer(that.locationMarker);
-                                        that.map.panTo(latlng);
-                                        that.locationMarker = L.marker(latlng).addTo(that.map);
-                                        // that.$bus.$emit(events.GETNEARPOINTS);
-
-                                        that.$bus.$emit(events.SELECTPOI, e.target.feature);
-
-                                        that.drawFaceBorder(e.target.feature.properties.id);
-
-                                        setTimeout(function () { // 解决 marker事件和地图事件重复执行的问题
-                                            that.map.on('click', function (event) {
-                                                console.info('click');
-                                                that.mapClick(event);
-                                            });
-                                        }, 100)
-                                    });
-                                }
+//                                if (flag == 1) {
+//                                    circleMarker.on('click', function (e) {
+//                                        that.map.off('click');
+//                                        const latlng = [e.latlng.lat, e.latlng.lng];
+//                                        that.locationMarker && that.map.removeLayer(that.locationMarker);
+//                                        that.map.panTo(latlng);
+//                                        that.locationMarker = L.marker(latlng).addTo(that.map);
+//                                        // that.$bus.$emit(events.GETNEARPOINTS);
+//
+//                                        that.$bus.$emit(events.SELECTPOI, e.target.feature);
+//
+//                                        that.drawFaceBorder(e.target.feature.properties.id);
+//
+//                                        setTimeout(function () { // 解决 marker事件和地图事件重复执行的问题
+//                                            that.map.on('click', function (event) {
+//                                                console.info('click');
+//                                                that.mapClick(event);
+//                                            });
+//                                        }, 100)
+//                                    });
+//                                }
                                 return circleMarker;
                             }
                         });
@@ -385,14 +426,7 @@
                     return null
                 })
             },
-            drawFaceBorder(poiId) {
-                var face;
-                for (let i = 0, len = this.poiFaces.length; i < len; i++) {
-                    if (this.poiFaces[i].properties.poiId === poiId) {
-                        face = this.poiFaces[i];
-                        break;
-                    }
-                }
+            drawFaceBorder(face) {
                 const style = {
                     style: function(feature) {
                         return {
