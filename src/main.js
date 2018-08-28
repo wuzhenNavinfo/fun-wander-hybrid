@@ -15,6 +15,14 @@ Vue.use(vueBus)
 Vue.use(VueRouter)
 
 Vue.prototype.globalData = {};// 用于存储全局变量
+Vue.prototype.globalData = { // 临时构造假数据
+    "currentBuilding": {
+        "id": "6101000094",
+        "name": "荣民龙首广场"
+    },
+    "currentFloorId": "61010000941001",
+    "zoom": 19
+};
 
 new Vue({
     render: h => h(App)

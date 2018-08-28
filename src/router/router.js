@@ -1,28 +1,28 @@
 import VueRouter from 'vue-router';
 
-import buildingInfos from '../components/buildingInfos.vue';
-import areaDataList from '../components/areaDataList.vue';
+// import areaDataList from '../components/areaDataList.vue';
 import MapBoxMap from '../components/MapBoxMap.vue';
 import LeafletMap from '../components/LeafletMap.vue';
 import MineMap from '../components/MineMap.vue';
 import BuildingList from '../components/BuildingList.vue';
 import PlaceSearch from '../components/PlaceSearch.vue';
-import Main from '../components/Main.vue';
+import SelectInfo from '../components/SelectInfo.vue';
+import PointInfo from '../components/PointInfo.vue';
+// import BuildingInfo from '../components/BuildingInfo.vue';
 
 const routes = [
   { path: '/', component: BuildingList },
-  { path: '/main', component: Main,
-      children: [
-          {
-              path: 'info',
-              component: buildingInfos
-          },
-          {
-              path: 'point',
-              component: areaDataList
-          }
-      ]
-  },
+  { path: '/selectInfo', component: SelectInfo },
+  { path: '/pointInfo', component: PointInfo },
+  // { path: '/main', component: Main,
+  //     children: [
+  //         { path: 'info', component: BuildingInfo },
+  //         {
+  //             path: 'point',
+  //             component: areaDataList
+  //         }
+  //     ]
+  // },
   { path: '/map', component: LeafletMap },
   { path: '/mapbox', component: MapBoxMap },
   { path: '/minmap', component: MineMap },
